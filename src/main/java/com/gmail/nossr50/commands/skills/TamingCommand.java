@@ -1,78 +1,145 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.config.LoadProperties;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
+import com.gmail.nossr50.config.Config;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.util.Page;
+import com.gmail.nossr50.locale.LocaleLoader;
 
-public class TamingCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class TamingCommand extends SkillCommand {
+    private String goreChance;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    private boolean canBeastLore;
+    private boolean canGore;
+    private boolean canSharpenedClaws;
+    private boolean canEnvironmentallyAware;
+    private boolean canThickFur;
+    private boolean canShockProof;
+    private boolean canCallWild;
+    private boolean canFastFood;
 
-		float skillvalue = (float) PP.getSkillLevel(SkillType.TAMING);
-		String percentage = String.valueOf((skillvalue / 1000) * 100);
+    public TamingCommand() {
+        super(SkillType.TAMING);
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillTaming") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainTaming") }));
+    @Override
+    protected void dataCalculations() {
+        if (skillValue >= 1000) {
+            goreChance = "100.00%";
+        }
+        else {
+            goreChance = percent.format(skillValue / 1000);
+        }    }
 
-		if (mcPermissions.getInstance().taming(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.TAMING), PP.getSkillXpLevel(SkillType.TAMING), PP.getXpToLevel(SkillType.TAMING) }));
+    @Override
+    protected void permissionsCheck() {
+        canBeastLore = permInstance.beastLore(player);
+        canCallWild = permInstance.callOfTheWild(player);
+        canEnvironmentallyAware = permInstance.environmentallyAware(player);
+        canFastFood = permInstance.fastFoodService(player);
+        canGore = permInstance.gore(player);
+        canSharpenedClaws = permInstance.sharpenedClaws(player);
+        canShockProof = permInstance.shockProof(player);
+        canThickFur = permInstance.thickFur(player);
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming1_0"), mcLocale.getString("m.EffectsTaming1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming2_0"), mcLocale.getString("m.EffectsTaming2_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming3_0"), mcLocale.getString("m.EffectsTaming3_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming4_0"), mcLocale.getString("m.EffectsTaming4_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming5_0"), mcLocale.getString("m.EffectsTaming5_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming6_0"), mcLocale.getString("m.EffectsTaming6_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming7_0"), mcLocale.getString("m.EffectsTaming7_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsTaming8_0"), mcLocale.getString("m.EffectsTaming8_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTaming7_2", new Object[] { LoadProperties.bonesConsumedByCOTW }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return canBeastLore || canCallWild || canEnvironmentallyAware || canFastFood || canGore || canSharpenedClaws || canShockProof || canThickFur;
+    }
 
-		if (PP.getSkillLevel(SkillType.TAMING) < 100)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockTaming1") }));
-		else
-			player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusTaming1_0"), mcLocale.getString("m.AbilBonusTaming1_1") }));
+    @Override
+    protected void effectsDisplay() {
+        Config configInstance = Config.getInstance();
 
-		if (PP.getSkillLevel(SkillType.TAMING) < 250)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockTaming2") }));
-		else
-			player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusTaming2_0"), mcLocale.getString("m.AbilBonusTaming2_1") }));
+        if (canBeastLore) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.0"), LocaleLoader.getString("Taming.Effect.1") }));
+        }
 
-		if (PP.getSkillLevel(SkillType.TAMING) < 500)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockTaming3") }));
-		else
-			player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusTaming3_0"), mcLocale.getString("m.AbilBonusTaming3_1") }));
+        if (canGore) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.2"), LocaleLoader.getString("Taming.Effect.3") }));
+        }
 
-		if (PP.getSkillLevel(SkillType.TAMING) < 750)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockTaming4") }));
-		else
-			player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusTaming4_0"), mcLocale.getString("m.AbilBonusTaming4_1") }));
-		if (PP.getSkillLevel(SkillType.TAMING) < 50)
-            player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockTaming5") }));
-		else
-	          player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusTaming5_0"), mcLocale.getString("m.AbilBonusTaming5_1") }));
-		
-		player.sendMessage(mcLocale.getString("m.TamingGoreChance", new Object[] { percentage }));
-		
-		Page.grabGuidePageForSkill(SkillType.TAMING, player, args);
+        if (canSharpenedClaws) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.4"), LocaleLoader.getString("Taming.Effect.5") }));
+        }
 
-		return true;
-	}
+        if (canEnvironmentallyAware) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.6"), LocaleLoader.getString("Taming.Effect.7") }));
+        }
+
+        if (canThickFur) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.8"), LocaleLoader.getString("Taming.Effect.9") }));
+        }
+
+        if (canShockProof) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.10"), LocaleLoader.getString("Taming.Effect.11") }));
+        }
+
+        if (canFastFood) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.16"), LocaleLoader.getString("Taming.Effect.17") }));
+        }
+
+        if (canCallWild) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Taming.Effect.12"), LocaleLoader.getString("Taming.Effect.13") }));
+            player.sendMessage(LocaleLoader.getString("Taming.Effect.14", new Object[] { configInstance.getTamingCOTWOcelotCost() }));
+            player.sendMessage(LocaleLoader.getString("Taming.Effect.15", new Object[] { configInstance.getTamingCOTWWolfCost() }));
+        }
+    }
+
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return canEnvironmentallyAware || canFastFood || canGore || canSharpenedClaws || canShockProof || canThickFur;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        if (canFastFood) {
+            if (skillValue < 50) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Taming.Ability.Locked.4") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Taming.Ability.Bonus.8"), LocaleLoader.getString("Taming.Ability.Bonus.9") }));
+            }
+        }
+
+        if (canEnvironmentallyAware) {
+            if (skillValue < 100) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Taming.Ability.Locked.0") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Taming.Ability.Bonus.0"), LocaleLoader.getString("Taming.Ability.Bonus.1") }));
+            }
+        }
+
+        if (canThickFur) {
+            if (skillValue < 250) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Taming.Ability.Locked.1") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Taming.Ability.Bonus.2"), LocaleLoader.getString("Taming.Ability.Bonus.3") }));
+            }
+        }
+
+        if (canShockProof) {
+            if (skillValue < 500) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Taming.Ability.Locked.2") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Taming.Ability.Bonus.4"), LocaleLoader.getString("Taming.Ability.Bonus.5") }));
+            }
+        }
+
+        if (canSharpenedClaws) {
+            if (skillValue < 750) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Taming.Ability.Locked.3") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Taming.Ability.Bonus.6"), LocaleLoader.getString("Taming.Ability.Bonus.7") }));
+            }
+        }
+
+        if (canGore) {
+            player.sendMessage(LocaleLoader.getString("Taming.Combat.Chance.Gore", new Object[] { goreChance }));
+        }
+    }
 }

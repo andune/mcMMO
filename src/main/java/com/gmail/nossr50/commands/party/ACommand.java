@@ -1,86 +1,112 @@
 package com.gmail.nossr50.commands.party;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.config.LoadProperties;
+import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.commands.CommandHelper;
 import com.gmail.nossr50.datatypes.PlayerProfile;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.events.chat.McMMOAdminChatEvent;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.Permissions;
+import com.gmail.nossr50.util.Users;
 
 public class ACommand implements CommandExecutor {
+    private final mcMMO plugin;
 
-	public ACommand() {}
+    public ACommand (mcMMO plugin) {
+        this.plugin = plugin;
+    }
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        PlayerProfile profile;
+        String usage = ChatColor.RED + "Proper usage is /a <message>"; //TODO: Needs more locale.
 
-		// Console message?
-		if (!(sender instanceof Player) && args.length >= 1) {
-			String aMessage = args[0];
-			for (int i = 1; i <= args.length - 1; i++) {
-				aMessage = aMessage + " " + args[i];
-			}
-
-			String aPrefix = ChatColor.AQUA + "{" + ChatColor.WHITE + "*Console*" + ChatColor.AQUA + "} ";
-
-			Bukkit.getLogger().info("[A]<*Console*> " + aMessage);
-
-			for (Player herp : Bukkit.getServer().getOnlinePlayers()) {
-				if (mcPermissions.getInstance().adminChat(herp) || herp.isOp())
-					herp.sendMessage(aPrefix + aMessage);
-			}
-			return true;
-		}
-
-		Player player = null;
-        if (sender instanceof Player) {
-            player = (Player) sender;
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.chat.adminchat")) {
+            return true;
         }
 
-		if (player != null && !mcPermissions.getInstance().adminChat(player) && !player.isOp()) {
-			player.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
-			return true;
-		}
+        switch (args.length) {
+        case 0:
+            if (sender instanceof Player) {
+                profile = Users.getProfile((Player) sender);
 
-		// Not a toggle, a message
+                if (profile.getPartyChatMode()) {
+                    profile.togglePartyChat();
+                }
 
-		if (args.length >= 1) {
-			String aMessage = args[0];
-			for (int i = 1; i <= args.length - 1; i++) {
-				aMessage = aMessage + " " + args[i];
-			}
+                profile.toggleAdminChat();
 
-			String name = (LoadProperties.aDisplayNames) ? player.getDisplayName() : player.getName();
-			String aPrefix = ChatColor.AQUA + "{" + ChatColor.WHITE + name + ChatColor.AQUA + "} ";
-			Bukkit.getLogger().info("[A]<" + name + "> " + aMessage);
-			for (Player herp : Bukkit.getServer().getOnlinePlayers()) {
-				if (mcPermissions.getInstance().adminChat(herp) || herp.isOp())
-					herp.sendMessage(aPrefix + aMessage);
-			}
-			return true;
-		}
+                if (profile.getAdminChatMode()) {
+                    sender.sendMessage(LocaleLoader.getString("Commands.AdminChat.On"));
+                }
+                else {
+                    sender.sendMessage(LocaleLoader.getString("Commands.AdminChat.Off"));
+                }
+            }
+            else {
+                sender.sendMessage(usage);
+            }
 
-		if(player != null)
-		{
-			PlayerProfile PP = Users.getProfile(player);
-			
-			if (PP.getPartyChatMode())
-				PP.togglePartyChat();
-	
-			PP.toggleAdminChat();
-	
-			if (PP.getAdminChatMode()) {
-				player.sendMessage(mcLocale.getString("mcPlayerListener.AdminChatOn"));
-			} else {
-				player.sendMessage(mcLocale.getString("mcPlayerListener.AdminChatOff"));
-			}
-		}
-		return true;
-	}
+            return true;
+
+        default:
+            StringBuffer buffer = new StringBuffer();
+            buffer.append(args[0]);
+
+            for (int i = 1; i < args.length; i++) {
+                buffer.append(" ");
+                buffer.append(args[i]);
+            }
+
+            String message = buffer.toString();
+
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+
+                McMMOAdminChatEvent chatEvent = new McMMOAdminChatEvent(player.getName(), message);
+                plugin.getServer().getPluginManager().callEvent(chatEvent);
+
+                if (chatEvent.isCancelled()) {
+                    return true;
+                }
+
+                message = chatEvent.getMessage();
+                String prefix = ChatColor.AQUA + "{" + ChatColor.WHITE + player.getName() + ChatColor.AQUA + "} ";
+
+                plugin.getLogger().info("[A]<" + player.getName() + "> " + message);
+
+                for (Player otherPlayer : plugin.getServer().getOnlinePlayers()) {
+                    if (Permissions.getInstance().adminChat(otherPlayer) || otherPlayer.isOp()) {
+                        otherPlayer.sendMessage(prefix + message);
+                    }
+                }
+            }
+            else {
+                McMMOAdminChatEvent chatEvent = new McMMOAdminChatEvent("Console", message);
+                plugin.getServer().getPluginManager().callEvent(chatEvent);
+
+                if (chatEvent.isCancelled()) {
+                    return true;
+                }
+
+                message = chatEvent.getMessage();
+                String prefix = ChatColor.AQUA + "{" + ChatColor.WHITE + "*Console*" + ChatColor.AQUA + "} ";
+
+                plugin.getLogger().info("[A]<*Console*> " + message);
+
+                for (Player player : plugin.getServer().getOnlinePlayers()) {
+                    if (Permissions.getInstance().adminChat(player) || player.isOp()) {
+                        player.sendMessage(prefix + message);
+                    }
+                }
+            }
+
+            return true;
+        }
+    }
 }

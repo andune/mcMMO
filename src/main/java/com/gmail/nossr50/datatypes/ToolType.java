@@ -3,16 +3,16 @@ package com.gmail.nossr50.datatypes;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
-import com.gmail.nossr50.ItemChecks;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.ItemChecks;
 
 public enum ToolType {
-    AXE(mcLocale.getString("Skills.LowerAxe"), mcLocale.getString("Skills.ReadyAxe")),
-    FISTS(mcLocale.getString("Skills.LowerFists"), mcLocale.getString("Skills.ReadyFists")),
-    HOE(mcLocale.getString("Skills.LowerHoe"), mcLocale.getString("Skills.ReadyHoe")),
-    PICKAXE(mcLocale.getString("Skills.LowerPickAxe"), mcLocale.getString("Skills.ReadyPickAxe")),
-    SHOVEL(mcLocale.getString("Skills.LowerShovel"), mcLocale.getString("Skills.ReadyShovel")),
-    SWORD(mcLocale.getString("Skills.LowerSword"), mcLocale.getString("Skills.ReadySword"));
+    AXE(LocaleLoader.getString("Axes.Ability.Lower"), LocaleLoader.getString("Axes.Ability.Ready")),
+    FISTS(LocaleLoader.getString("Unarmed.Ability.Lower"), LocaleLoader.getString("Unarmed.Ability.Ready")),
+    HOE(LocaleLoader.getString("Herbalism.Ability.Lower"), LocaleLoader.getString("Herbalism.Ability.Ready")),
+    PICKAXE(LocaleLoader.getString("Mining.Ability.Lower"), LocaleLoader.getString("Mining.Ability.Ready")),
+    SHOVEL(LocaleLoader.getString("Excavation.Ability.Lower"), LocaleLoader.getString("Excavation.Ability.Ready")),
+    SWORD(LocaleLoader.getString("Swords.Ability.Lower"), LocaleLoader.getString("Swords.Ability.Ready"));
 
     private String lowerTool;
     private String raiseTool;
@@ -48,7 +48,7 @@ public enum ToolType {
             return ItemChecks.isHoe(is);
 
         case PICKAXE:
-            return ItemChecks.isMiningPick(is);
+            return ItemChecks.isPickaxe(is);
 
         case SHOVEL:
             return ItemChecks.isShovel(is);

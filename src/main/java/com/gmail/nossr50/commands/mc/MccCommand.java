@@ -6,58 +6,67 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.commands.CommandHelper;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.Permissions;
 
+//TODO: Rework this whole thing. It's ugly. Also is missing all the admin & spout commands.
 public class MccCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage.");
-			return true;
-		}
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (CommandHelper.noConsoleUsage(sender)) {
+            return true;
+        }
 
-		Player player = (Player) sender;
+        Player player = (Player) sender;
 
-		player.sendMessage(ChatColor.RED + "---[]" + ChatColor.YELLOW + "mcMMO Commands" + ChatColor.RED + "[]---"); //TODO: Needs more locale.
+        player.sendMessage(ChatColor.RED + "---[]" + ChatColor.YELLOW + "mcMMO Commands" + ChatColor.RED + "[]---"); //TODO: Needs more locale.
 
-		if (mcPermissions.getInstance().party(player)) {
-			player.sendMessage(mcLocale.getString("m.mccPartyCommands"));
-			player.sendMessage("/party " + mcLocale.getString("m.mccParty"));
-			player.sendMessage("/party q " + mcLocale.getString("m.mccPartyQ"));
+        if (Permissions.getInstance().party(player)) {
+            player.sendMessage(LocaleLoader.getString("Commands.Party.Commands"));
+            player.sendMessage("/party " + LocaleLoader.getString("Commands.Party"));
+            player.sendMessage("/party q " + LocaleLoader.getString("Commands.Party.Quit"));
 
-			if (mcPermissions.getInstance().partyChat(player))
-				player.sendMessage("/p " + mcLocale.getString("m.mccPartyToggle"));
+            if (Permissions.getInstance().partyChat(player)) {
+                player.sendMessage("/p " + LocaleLoader.getString("Commands.Party.Toggle"));
+            }
 
-			player.sendMessage("/invite " + mcLocale.getString("m.mccPartyInvite"));
-			player.sendMessage("/invite " + mcLocale.getString("m.mccPartyAccept"));
+            player.sendMessage("/invite " + LocaleLoader.getString("Commands.Party.Invite"));
+            player.sendMessage("/accept " + LocaleLoader.getString("Commands.Party.Accept"));
 
-			if (mcPermissions.getInstance().partyTeleport(player))
-				player.sendMessage("/ptp " + mcLocale.getString("m.mccPartyTeleport"));
-		}
-		player.sendMessage(mcLocale.getString("m.mccOtherCommands"));
-		player.sendMessage("/mcstats " + ChatColor.RED + mcLocale.getString("m.mccStats"));
-		player.sendMessage("/mctop <skillname> <page> " + ChatColor.RED + mcLocale.getString("m.mccLeaderboards"));
+            if (Permissions.getInstance().partyTeleport(player)) {
+                player.sendMessage("/ptp " + LocaleLoader.getString("Commands.Party.Teleport"));
+            }
+        }
 
-		if (mcPermissions.getInstance().mcAbility(player))
-			player.sendMessage("/mcability " + ChatColor.RED + mcLocale.getString("m.mccToggleAbility"));
+        player.sendMessage(LocaleLoader.getString("Commands.Other"));
+        player.sendMessage("/mcstats " + LocaleLoader.getString("Commands.Stats"));
+        player.sendMessage("/mctop " + LocaleLoader.getString("Commands.Leaderboards"));
 
-		if (mcPermissions.getInstance().adminChat(player))
-			player.sendMessage("/a " + ChatColor.RED + mcLocale.getString("m.mccAdminToggle"));
+        if (Permissions.getInstance().mcAbility(player)) {
+            player.sendMessage("/mcability " + LocaleLoader.getString("Commands.ToggleAbility"));
+        }
 
-		if (mcPermissions.getInstance().inspect(player))
-			player.sendMessage("/inspect " + mcLocale.getString("m.mccInspect"));
+        if (Permissions.getInstance().adminChat(player)) {
+            player.sendMessage("/a " + LocaleLoader.getString("Commands.AdminToggle"));
+        }
 
-		if (mcPermissions.getInstance().mmoedit(player))
-			player.sendMessage("/mmoedit " + mcLocale.getString("m.mccMmoedit"));
+        if (Permissions.getInstance().inspect(player)) {
+            player.sendMessage("/inspect " + LocaleLoader.getString("Commands.Inspect"));
+        }
 
-		if (mcPermissions.getInstance().mcgod(player))
-			player.sendMessage("/mcgod " + ChatColor.RED + mcLocale.getString("m.mccMcGod"));
+        if (Permissions.getInstance().mmoedit(player)) {
+            player.sendMessage("/mmoedit " + LocaleLoader.getString("Commands.mmoedit"));
+        }
 
-		player.sendMessage(mcLocale.getString("m.mccSkillInfo"));
-		player.sendMessage("/mcmmo " + mcLocale.getString("m.mccModDescription"));
+        if (Permissions.getInstance().mcgod(player)) {
+            player.sendMessage("/mcgod " + LocaleLoader.getString("Commands.mcgod"));
+        }
 
-		return true;
-	}
+        player.sendMessage(LocaleLoader.getString("Commands.SkillInfo"));
+        player.sendMessage("/mcmmo " + LocaleLoader.getString("Commands.ModDescription"));
+
+        return true;
+    }
 }

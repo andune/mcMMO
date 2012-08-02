@@ -1,94 +1,135 @@
 package com.gmail.nossr50.commands.party;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.config.LoadProperties;
+import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.commands.CommandHelper;
 import com.gmail.nossr50.datatypes.PlayerProfile;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.events.chat.McMMOPartyChatEvent;
+import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.party.Party;
+import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.util.Users;
 
 public class PCommand implements CommandExecutor {
-	public PCommand() {}
+    private final mcMMO plugin;
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public PCommand (mcMMO plugin) {
+        this.plugin = plugin;
+    }
 
-		// Console message?
-		if (!(sender instanceof Player)) {
-			if (args.length < 2)
-				return true;
-			String pMessage = args[1];
-			for (int i = 2; i <= args.length - 1; i++) {
-				pMessage = pMessage + " " + args[i];
-			}
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        PlayerProfile profile;
+        String usage = ChatColor.RED + "Proper usage is /p <party-name> <message>"; //TODO: Needs more locale.
 
-			String pPrefix = ChatColor.GREEN + "(" + ChatColor.WHITE + "*Console*" + ChatColor.GREEN + ") ";
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.commands.party")) {
+            return true;
+        }
 
-			Bukkit.getLogger().info("[P](" + args[0] + ")" + "<*Console*> " + pMessage);
+        switch (args.length) {
+        case 0:
+            if (sender instanceof Player) {
+                profile = Users.getProfile((Player) sender);
 
-			for (Player herp : Bukkit.getServer().getOnlinePlayers()) {
-				if (Users.getProfile(herp).inParty()) {
-					if (Users.getProfile(herp).getParty().equalsIgnoreCase(args[0])) {
-						herp.sendMessage(pPrefix + pMessage);
-					}
-				}
-			}
-			return true;
-		}
+                if (profile.getAdminChatMode()) {
+                    profile.toggleAdminChat();
+                }
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+                profile.togglePartyChat();
 
-		if (!mcPermissions.getInstance().party(player)) {
-			player.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
-			return true;
-		}
+                if (profile.getPartyChatMode()) {
+                    sender.sendMessage(LocaleLoader.getString("Commands.Party.Chat.On"));
+                }
+                else {
+                    sender.sendMessage(LocaleLoader.getString("Commands.Party.Chat.Off"));
+                }
+            }
+            else {
+                sender.sendMessage(usage);
+            }
 
-		// Not a toggle, a message
+            return true;
 
-		if (args.length >= 1) {
-			if(!PP.inParty()) {
-				player.sendMessage("You're not in a party."); //TODO: Use mcLocale
-				return true;
-			}
-			
-			String pMessage = args[0];
-			for (int i = 1; i <= args.length - 1; i++) {
-				pMessage = pMessage + " " + args[i];
-			}
+        default:
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                Party party = Users.getProfile(player).getParty();
 
-			String name = (LoadProperties.pDisplayNames) ? player.getDisplayName() : player.getName();
-			String pPrefix = ChatColor.GREEN + "(" + ChatColor.WHITE + name + ChatColor.GREEN + ") ";
-			Bukkit.getLogger().info("[P](" + PP.getParty() + ")<" + name + "> " + pMessage);
+                if (party == null) {
+                    player.sendMessage(LocaleLoader.getString("Commands.Party.None"));
+                    return true;
+                }
 
-			for (Player herp : Bukkit.getServer().getOnlinePlayers()) {
-				if (Users.getProfile(herp).inParty()) {
-					if (Party.getInstance().inSameParty(herp, player))
-						herp.sendMessage(pPrefix + pMessage);
-				}
-			}
+                StringBuffer buffer = new StringBuffer();
+                buffer.append(args[0]);
 
-			return true;
-		}
+                for (int i = 1; i < args.length; i++) {
+                    buffer.append(" ");
+                    buffer.append(args[i]);
+                }
 
-		if (PP.getAdminChatMode())
-			PP.toggleAdminChat();
+                String message = buffer.toString();
 
-		PP.togglePartyChat();
+                McMMOPartyChatEvent chatEvent = new McMMOPartyChatEvent(player.getName(), party.getName(), message);
+                plugin.getServer().getPluginManager().callEvent(chatEvent);
 
-		if (PP.getPartyChatMode()) {
-			player.sendMessage(mcLocale.getString("mcPlayerListener.PartyChatOn"));
-		} else {
-			player.sendMessage(mcLocale.getString("mcPlayerListener.PartyChatOff"));
-		}
+                if (chatEvent.isCancelled()) {
+                    return true;
+                }
 
-		return true;
-	}
+                message = chatEvent.getMessage();
+                String prefix = ChatColor.GREEN + "(" + ChatColor.WHITE + player.getName() + ChatColor.GREEN + ") ";
+
+                plugin.getLogger().info("[P](" + party.getName() + ")" + "<" + player.getName() + "> " + message);
+
+                for (Player member : party.getOnlineMembers()) {
+                    member.sendMessage(prefix + message);
+                }
+            }
+            else {
+                if (args.length < 2) {
+                    sender.sendMessage(usage);
+                    return true;
+                }
+
+                if (!PartyManager.getInstance().isParty(args[0])) {
+                    sender.sendMessage(LocaleLoader.getString("Party.InvalidName"));
+                    return true;
+                }
+
+                StringBuffer buffer = new StringBuffer();
+                buffer.append(args[1]);
+
+                for (int i = 2; i < args.length; i++) {
+                    buffer.append(" ");
+                    buffer.append(args[i]);
+                }
+
+                String message = buffer.toString();
+
+                McMMOPartyChatEvent chatEvent = new McMMOPartyChatEvent("Console", args[0], message);
+                plugin.getServer().getPluginManager().callEvent(chatEvent);
+
+                if (chatEvent.isCancelled()) {
+                    return true;
+                }
+
+                message = chatEvent.getMessage();
+                String prefix = ChatColor.GREEN + "(" + ChatColor.WHITE + "*Console*" + ChatColor.GREEN + ") ";
+
+                plugin.getLogger().info("[P](" + args[0] + ")" + "<*Console*> " + message);
+
+                for (Player member : PartyManager.getInstance().getOnlineMembers(args[0])) {
+                    member.sendMessage(prefix + message);
+                }
+            }
+
+            return true;
+        }
+    }
 }

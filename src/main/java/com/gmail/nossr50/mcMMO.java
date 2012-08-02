@@ -1,117 +1,168 @@
 package com.gmail.nossr50;
 
-import com.gmail.nossr50.datatypes.PlayerProfile;
-import com.gmail.nossr50.commands.skills.*;
-import com.gmail.nossr50.commands.spout.*;
-import com.gmail.nossr50.commands.mc.*;
-import com.gmail.nossr50.commands.party.*;
-import com.gmail.nossr50.commands.general.*;
-import com.gmail.nossr50.config.*;
-import com.gmail.nossr50.runnables.*;
-import com.gmail.nossr50.listeners.mcBlockListener;
-import com.gmail.nossr50.listeners.mcEntityListener;
-import com.gmail.nossr50.listeners.mcPlayerListener;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.party.Party;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
+import net.shatteredlands.shatt.backup.ZipLibrary;
+
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
+
+import com.gmail.nossr50.commands.general.AddlevelsCommand;
+import com.gmail.nossr50.commands.general.AddxpCommand;
+import com.gmail.nossr50.commands.general.InspectCommand;
+import com.gmail.nossr50.commands.general.McstatsCommand;
+import com.gmail.nossr50.commands.general.MmoeditCommand;
+import com.gmail.nossr50.commands.general.MmoupdateCommand;
+import com.gmail.nossr50.commands.general.XprateCommand;
+import com.gmail.nossr50.commands.mc.McabilityCommand;
+import com.gmail.nossr50.commands.mc.MccCommand;
+import com.gmail.nossr50.commands.mc.McgodCommand;
+import com.gmail.nossr50.commands.mc.McmmoCommand;
+import com.gmail.nossr50.commands.mc.McrefreshCommand;
+import com.gmail.nossr50.commands.mc.McremoveCommand;
+import com.gmail.nossr50.commands.mc.MctopCommand;
+import com.gmail.nossr50.commands.party.ACommand;
+import com.gmail.nossr50.commands.party.AcceptCommand;
+import com.gmail.nossr50.commands.party.InviteCommand;
+import com.gmail.nossr50.commands.party.PCommand;
+import com.gmail.nossr50.commands.party.PartyCommand;
+import com.gmail.nossr50.commands.party.PtpCommand;
+import com.gmail.nossr50.commands.skills.AcrobaticsCommand;
+import com.gmail.nossr50.commands.skills.ArcheryCommand;
+import com.gmail.nossr50.commands.skills.AxesCommand;
+import com.gmail.nossr50.commands.skills.ExcavationCommand;
+import com.gmail.nossr50.commands.skills.FishingCommand;
+import com.gmail.nossr50.commands.skills.HerbalismCommand;
+import com.gmail.nossr50.commands.skills.MiningCommand;
+import com.gmail.nossr50.commands.skills.RepairCommand;
+import com.gmail.nossr50.commands.skills.SwordsCommand;
+import com.gmail.nossr50.commands.skills.TamingCommand;
+import com.gmail.nossr50.commands.skills.UnarmedCommand;
+import com.gmail.nossr50.commands.skills.WoodcuttingCommand;
+import com.gmail.nossr50.commands.spout.MchudCommand;
+import com.gmail.nossr50.commands.spout.XplockCommand;
+import com.gmail.nossr50.config.Config;
+import com.gmail.nossr50.config.HiddenConfig;
+import com.gmail.nossr50.config.TreasuresConfig;
+import com.gmail.nossr50.config.mods.CustomArmorConfig;
+import com.gmail.nossr50.config.mods.CustomBlocksConfig;
+import com.gmail.nossr50.config.mods.CustomToolsConfig;
+import com.gmail.nossr50.config.repair.RepairConfigManager;
+import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.listeners.BlockListener;
+import com.gmail.nossr50.listeners.EntityListener;
+import com.gmail.nossr50.listeners.HardcoreListener;
+import com.gmail.nossr50.listeners.PlayerListener;
+import com.gmail.nossr50.listeners.WorldListener;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.runnables.BleedTimer;
+import com.gmail.nossr50.runnables.ChunkletUnloader;
+import com.gmail.nossr50.runnables.SaveTimer;
+import com.gmail.nossr50.runnables.SkillMonitor;
+import com.gmail.nossr50.runnables.SpoutStart;
+import com.gmail.nossr50.skills.repair.RepairManager;
+import com.gmail.nossr50.skills.repair.RepairManagerFactory;
+import com.gmail.nossr50.skills.repair.Repairable;
+import com.gmail.nossr50.util.Database;
+import com.gmail.nossr50.util.Leaderboard;
+import com.gmail.nossr50.util.Metrics;
+import com.gmail.nossr50.util.Metrics.Graph;
+import com.gmail.nossr50.util.Users;
+import com.gmail.nossr50.util.blockmeta.ChunkletManager;
+import com.gmail.nossr50.util.blockmeta.ChunkletManagerFactory;
 
 public class mcMMO extends JavaPlugin {
 
-    public static String maindirectory = "plugins" + File.separator + "mcMMO";
-    public static File file = new File(maindirectory + File.separator + "config.yml");
-    public static File versionFile = new File(maindirectory + File.separator + "VERSION");
+    private final PlayerListener playerListener = new PlayerListener(this);
+    private final BlockListener blockListener = new BlockListener(this);
+    private final EntityListener entityListener = new EntityListener(this);
+    private final WorldListener worldListener = new WorldListener();
+    private final HardcoreListener hardcoreListener = new HardcoreListener();
 
-    private final mcPlayerListener playerListener = new mcPlayerListener(this);
-    private final mcBlockListener blockListener = new mcBlockListener(this);
-    private final mcEntityListener entityListener = new mcEntityListener(this);
+    private HashMap<String, String> aliasMap = new HashMap<String, String>(); //Alias - Command
+    private HashMap<Integer, String> tntTracker = new HashMap<Integer, String>();
 
-    //Alias - Command
-    public HashMap<String, String> aliasMap = new HashMap<String, String>();
-    public HashMap<Entity, Integer> arrowTracker = new HashMap<Entity, Integer>();
-    public HashMap<Integer, Player> tntTracker = new HashMap<Integer, Player>();
+    private static Database database;
+    public static mcMMO p;
 
-    public static Database database = null;
+    public static ChunkletManager placeStore;
+    public static RepairManager repairManager;
 
-    //Config file stuff
-    LoadProperties config;
-    LoadTreasures config2;
-
-    //Jar stuff
+    /* Jar Stuff */
     public static File mcmmo;
+
+    //File Paths
+    private static String mainDirectory;
+    private static String flatFileDirectory;
+    private static String usersFile;
+    private static String leaderboardDirectory;
+    private static String modDirectory;
+
+    //Spout Check
+    public static boolean spoutEnabled;
 
     /**
      * Things to be run when the plugin is enabled.
      */
+    @Override
     public void onEnable() {
-        final Plugin thisPlugin = this;
-        mcmmo = this.getFile();
-        new File(maindirectory).mkdir();
+        p = this;
+        setupFilePaths();
 
-        if (!versionFile.exists()) {
-            updateVersion();
-        }
-        else {
-            String vnum = readVersion();
+        //Force the loading of config files
+        Config configInstance = Config.getInstance();
+        TreasuresConfig.getInstance();
+        HiddenConfig.getInstance();
 
-            //This will be changed to whatever version preceded when we actually need updater code.
-            //Version 1.0.48 is the first to implement this, no checking before that version can be done.
-            if (vnum.equalsIgnoreCase("1.0.48")) {
-                updateFrom(1);
-            }
+        List<Repairable> repairables = new ArrayList<Repairable>();
 
-            //Just add in more else if blocks for versions that need updater code.  Increment the updateFrom age int as we do so.
-            //Catch all for versions not matching and no specific code being needed
-            else if (!vnum.equalsIgnoreCase(this.getDescription().getVersion())) {
-                updateFrom(-1);
-            }
+        if (configInstance.getToolModsEnabled()) {
+            repairables.addAll(CustomToolsConfig.getInstance().getLoadedRepairables());
         }
 
-        this.config = new LoadProperties(this);
-        this.config.load();
-
-        this.config2 = new LoadTreasures(this);
-        this.config2.load();
-
-        Party.getInstance().loadParties();
-        new Party(this);
-
-        if (!LoadProperties.useMySQL) {
-            Users.getInstance().loadUsers();
+        if (configInstance.getArmorModsEnabled()) {
+            repairables.addAll(CustomArmorConfig.getInstance().getLoadedRepairables());
         }
 
-        PluginManager pm = getServer().getPluginManager();
+        if (configInstance.getBlockModsEnabled()) {
+            CustomBlocksConfig.getInstance();
+        }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(this, new SpoutStart(this), 20); //Schedule Spout Activation 1 second after start-up
+        //Load repair configs, make manager, and register them at this time
+        RepairConfigManager rManager = new RepairConfigManager(this);
+        repairables.addAll(rManager.getLoadedRepairables());
+        repairManager = RepairManagerFactory.getRepairManager(repairables.size());
+        repairManager.registerRepairables(repairables);
+
+        if (!configInstance.getUseMySQL()) {
+            Users.loadUsers();
+        }
+
+        PluginManager pluginManager = getServer().getPluginManager();
 
         //Register events
-        pm.registerEvents(playerListener, this);
-        pm.registerEvents(blockListener, this);
-        pm.registerEvents(entityListener, this);
+        pluginManager.registerEvents(playerListener, this);
+        pluginManager.registerEvents(blockListener, this);
+        pluginManager.registerEvents(entityListener, this);
+        pluginManager.registerEvents(worldListener, this);
 
-        PluginDescriptionFile pdfFile = this.getDescription();
+        if (configInstance.getHardcoreEnabled()) {
+            pluginManager.registerEvents(hardcoreListener, this);
+        }
+
+        PluginDescriptionFile pdfFile = getDescription();
 
         //Setup the leaderboards
-        if (LoadProperties.useMySQL) {
+        if (configInstance.getUseMySQL()) {
             database = new Database(this);
             database.createStructure();
         }
@@ -127,32 +178,75 @@ public class mcMMO extends JavaPlugin {
 
         BukkitScheduler scheduler = getServer().getScheduler();
 
-        //Periodic save timer (Saves every 10 minutes)
-        scheduler.scheduleSyncRepeatingTask(this, new mcSaveTimer(this), 0, LoadProperties.saveInterval * 1200);
+        //Schedule Spout Activation 1 second after start-up
+        scheduler.scheduleSyncDelayedTask(this, new SpoutStart(this), 20);
+        //Periodic save timer (Saves every 10 minutes by default)
+        scheduler.scheduleSyncRepeatingTask(this, new SaveTimer(this), 0, configInstance.getSaveInterval() * 1200);
         //Regen & Cooldown timer (Runs every second)
-        scheduler.scheduleSyncRepeatingTask(this, new mcTimer(this), 0, 20);
+        scheduler.scheduleSyncRepeatingTask(this, new SkillMonitor(this), 0, 20);
         //Bleed timer (Runs every two seconds)
-        scheduler.scheduleSyncRepeatingTask(this, new mcBleedTimer(this), 0, 40);
+        scheduler.scheduleSyncRepeatingTask(this, new BleedTimer(), 0, 40);
+        //Chunklet unloader (Runs every 20 seconds by default)
+        scheduler.scheduleSyncRepeatingTask(this, new ChunkletUnloader(), 0, ChunkletUnloader.RUN_INTERVAL * 20);
 
         registerCommands();
 
-        if (LoadProperties.statsTracking) {
-            //Plugin Metrics running in a new thread
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        // create a new metrics object
-                        Metrics metrics = new Metrics();
+        if (configInstance.getStatsTrackingEnabled()) {
+            try {
+                Metrics metrics = new Metrics(this);
 
-                        // 'this' in this context is the Plugin object
-                        metrics.beginMeasuringPlugin(thisPlugin);
-                    }
-                    catch (IOException e) {
-                        System.out.println("Failed to submit stats.");
-                    }
+                Graph graph = metrics.createGraph("Percentage of servers using timings");
+
+                if (pluginManager.useTimings()) {
+                    graph.addPlotter(new Metrics.Plotter("Enabled") {
+                        @Override
+                        public int getValue() {
+                            return 1;
+                        }
+                    });
                 }
-            }).start();
+                else {
+                    graph.addPlotter(new Metrics.Plotter("Disabled") {
+                        @Override
+                        public int getValue() {
+                            return 1;
+                        }
+                    });
+                }
+
+                metrics.start();
+            }
+            catch (IOException e) {
+                System.out.println("Failed to submit stats.");
+            }
         }
+
+        // Get our ChunkletManager
+        placeStore = ChunkletManagerFactory.getChunkletManager();
+    }
+
+    /**
+     * Setup the various storage file paths
+     */
+    public void setupFilePaths() {
+        mcmmo = getFile();
+        mainDirectory = getDataFolder().getPath() + File.separator;
+        flatFileDirectory = mainDirectory + "FlatFileStuff" + File.separator;
+        usersFile = flatFileDirectory + "mcmmo.users";
+        leaderboardDirectory = flatFileDirectory + "Leaderboards" + File.separator;
+        modDirectory = mainDirectory + "ModConfigs" + File.separator;
+    }
+
+    /**
+     * Get profile of the player by name.
+     * </br>
+     * This function is designed for API usage.
+     *
+     * @param playerName Name of player whose profile to get
+     * @return the PlayerProfile object
+     */
+    public PlayerProfile getPlayerProfile(String playerName) {
+        return Users.getProfile(playerName);
     }
 
     /**
@@ -160,9 +254,22 @@ public class mcMMO extends JavaPlugin {
      * </br>
      * This function is designed for API usage.
      *
-     * @param player Player whose profile to get
+     * @param player player whose profile to get
      * @return the PlayerProfile object
      */
+    public PlayerProfile getPlayerProfile(OfflinePlayer player) {
+        return Users.getProfile(player);
+    }
+
+    /**
+     * Get profile of the player.
+     * </br>
+     * This function is designed for API usage.
+     *
+     * @param player player whose profile to get
+     * @return the PlayerProfile object
+     */
+    @Deprecated
     public PlayerProfile getPlayerProfile(Player player) {
         return Users.getProfile(player);
     }
@@ -170,14 +277,22 @@ public class mcMMO extends JavaPlugin {
     /**
      * Things to be run when the plugin is disabled.
      */
+    @Override
     public void onDisable() {
+        Users.saveAll(); //Make sure to save player information if the server shuts down
+        PartyManager.getInstance().saveParties();
+        getServer().getScheduler().cancelTasks(this); //This removes our tasks
+        placeStore.saveAll(); //Save our metadata
+        placeStore.cleanUp(); //Cleanup empty metadata stores
 
-        //Make sure to save player information if the server shuts down
-        for (PlayerProfile x : Users.getProfiles().values()) {
-            x.save();
+        //Remove other tasks BEFORE starting the Backup, or we just cancel it straight away.
+        try {
+            ZipLibrary.mcMMObackup();
+        }
+        catch (IOException e) {
+            getLogger().severe(e.toString());
         }
 
-        Bukkit.getServer().getScheduler().cancelTasks(this); //This removes our tasks
         System.out.println("mcMMO was disabled."); //How informative!
     }
 
@@ -185,21 +300,20 @@ public class mcMMO extends JavaPlugin {
      * Register the commands.
      */
     private void registerCommands() {
-
         //Register aliases with the aliasmap (used in the playercommandpreprocessevent to ugly alias them to actual commands)
         //Skills commands
-        aliasMap.put(mcLocale.getString("m.SkillAcrobatics").toLowerCase(), "acrobatics");
-        aliasMap.put(mcLocale.getString("m.SkillArchery").toLowerCase(), "archery");
-        aliasMap.put(mcLocale.getString("m.SkillAxes").toLowerCase(), "axes");
-        aliasMap.put(mcLocale.getString("m.SkillExcavation").toLowerCase(), "excavation");
-        aliasMap.put(mcLocale.getString("m.SkillFishing").toLowerCase(), "fishing");
-        aliasMap.put(mcLocale.getString("m.SkillHerbalism").toLowerCase(), "herbalism");
-        aliasMap.put(mcLocale.getString("m.SkillMining").toLowerCase(), "mining");
-        aliasMap.put(mcLocale.getString("m.SkillRepair").toLowerCase(), "repair");
-        aliasMap.put(mcLocale.getString("m.SkillSwords").toLowerCase(), "swords");
-        aliasMap.put(mcLocale.getString("m.SkillTaming").toLowerCase(), "taming");
-        aliasMap.put(mcLocale.getString("m.SkillUnarmed").toLowerCase(), "unarmed");
-        aliasMap.put(mcLocale.getString("m.SkillWoodCutting").toLowerCase(), "woodcutting");
+        aliasMap.put(LocaleLoader.getString("Acrobatics.SkillName").toLowerCase(), "acrobatics");
+        aliasMap.put(LocaleLoader.getString("Archery.SkillName").toLowerCase(), "archery");
+        aliasMap.put(LocaleLoader.getString("Axes.SkillName").toLowerCase(), "axes");
+        aliasMap.put(LocaleLoader.getString("Excavation.SkillName").toLowerCase(), "excavation");
+        aliasMap.put(LocaleLoader.getString("Fishing.SkillName").toLowerCase(), "fishing");
+        aliasMap.put(LocaleLoader.getString("Herbalism.SkillName").toLowerCase(), "herbalism");
+        aliasMap.put(LocaleLoader.getString("Mining.SkillName").toLowerCase(), "mining");
+        aliasMap.put(LocaleLoader.getString("Repair.SkillName").toLowerCase(), "repair");
+        aliasMap.put(LocaleLoader.getString("Swords.SkillName").toLowerCase(), "swords");
+        aliasMap.put(LocaleLoader.getString("Taming.SkillName").toLowerCase(), "taming");
+        aliasMap.put(LocaleLoader.getString("Unarmed.SkillName").toLowerCase(), "unarmed");
+        aliasMap.put(LocaleLoader.getString("Woodcutting.SkillName").toLowerCase(), "woodcutting");
 
         //Register commands
         //Skills commands
@@ -216,89 +330,91 @@ public class mcMMO extends JavaPlugin {
         getCommand("unarmed").setExecutor(new UnarmedCommand());
         getCommand("woodcutting").setExecutor(new WoodcuttingCommand());
 
+        Config configInstance = Config.getInstance();
+
         //mc* commands
-        if (LoadProperties.mcremoveEnable) {
-            getCommand("mcremove").setExecutor(new McremoveCommand());
+        if (configInstance.getCommandMCRemoveEnabled()) {
+            getCommand("mcremove").setExecutor(new McremoveCommand(this));
         }
 
-        if (LoadProperties.mcabilityEnable) {
+        if (configInstance.getCommandMCAbilityEnabled()) {
             getCommand("mcability").setExecutor(new McabilityCommand());
         }
 
-        if (LoadProperties.mccEnable) {
+        if (configInstance.getCommandMCCEnabled()) {
             getCommand("mcc").setExecutor(new MccCommand());
         }
 
-        if (LoadProperties.mcgodEnable) {
+        if (configInstance.getCommandMCGodEnabled()) {
             getCommand("mcgod").setExecutor(new McgodCommand());
         }
 
-        if (LoadProperties.mcmmoEnable) {
+        if (configInstance.getCommandmcMMOEnabled()) {
             getCommand("mcmmo").setExecutor(new McmmoCommand());
         }
 
-        if (LoadProperties.mcrefreshEnable) {
+        if (configInstance.getCommandMCRefreshEnabled()) {
             getCommand("mcrefresh").setExecutor(new McrefreshCommand(this));
         }
 
-        if (LoadProperties.mctopEnable) {
+        if (configInstance.getCommandMCTopEnabled()) {
             getCommand("mctop").setExecutor(new MctopCommand());
         }
 
-        if (LoadProperties.mcstatsEnable) {
+        if (configInstance.getCommandMCStatsEnabled()) {
             getCommand("mcstats").setExecutor(new McstatsCommand());
         }
 
         //Party commands
-        if (LoadProperties.acceptEnable) {
-            getCommand("accept").setExecutor(new AcceptCommand());
+        if (configInstance.getCommandAcceptEnabled()) {
+            getCommand("accept").setExecutor(new AcceptCommand(this));
         }
 
-        if (LoadProperties.aEnable) {
-            getCommand("a").setExecutor(new ACommand());
+        if (configInstance.getCommandAdminChatAEnabled()) {
+            getCommand("a").setExecutor(new ACommand(this));
         }
 
-        if (LoadProperties.inviteEnable) {
+        if (configInstance.getCommandInviteEnabled()) {
             getCommand("invite").setExecutor(new InviteCommand(this));
         }
 
-        if (LoadProperties.partyEnable) {
-            getCommand("party").setExecutor(new PartyCommand());
+        if (configInstance.getCommandPartyEnabled()) {
+            getCommand("party").setExecutor(new PartyCommand(this));
         }
 
-        if (LoadProperties.pEnable) {
-            getCommand("p").setExecutor(new PCommand());
+        if (configInstance.getCommandPartyChatPEnabled()) {
+            getCommand("p").setExecutor(new PCommand(this));
         }
 
-        if (LoadProperties.ptpEnable) {
+        if (configInstance.getCommandPTPEnabled()) {
             getCommand("ptp").setExecutor(new PtpCommand(this));
         }
 
         //Other commands
-        if (LoadProperties.addxpEnable) {
+        if (configInstance.getCommandAddXPEnabled()) {
             getCommand("addxp").setExecutor(new AddxpCommand(this));
         }
 
-        if (LoadProperties.addlevelsEnable) {
+        if (configInstance.getCommandAddLevelsEnabled()) {
             getCommand("addlevels").setExecutor(new AddlevelsCommand(this));
         }
 
-        if (LoadProperties.mmoeditEnable) {
+        if (configInstance.getCommandMmoeditEnabled()) {
             getCommand("mmoedit").setExecutor(new MmoeditCommand());
         }
 
-        if (LoadProperties.inspectEnable) {
-            getCommand("inspect").setExecutor(new InspectCommand(this));
+        if (configInstance.getCommandInspectEnabled()) {
+            getCommand("inspect").setExecutor(new InspectCommand());
         }
 
-        if (LoadProperties.xprateEnable) {
-            getCommand("xprate").setExecutor(new XprateCommand());
+        if (configInstance.getCommandXPRateEnabled()) {
+            getCommand("xprate").setExecutor(new XprateCommand(this));
         }
 
-        getCommand("mmoupdate").setExecutor(new MmoupdateCommand());
+        getCommand("mmoupdate").setExecutor(new MmoupdateCommand(this));
 
         //Spout commands
-        if (LoadProperties.xplockEnable) {
+        if (configInstance.getCommandXPLockEnabled()) {
             getCommand("xplock").setExecutor(new XplockCommand());
         }
 
@@ -306,133 +422,86 @@ public class mcMMO extends JavaPlugin {
     }
 
     /**
-     * Update mcMMO from a given version
-     * </p>
-     * It is important to always assume that you are updating from the lowest possible version.
-     * Thus, every block of updater code should be complete and self-contained; finishing all 
-     * SQL transactions and closing all file handlers, such that the next block of updater code
-     * if called will handle updating as expected.
+     * Checks to see if the alias map contains the given key.
      *
-     * @param age Specifies which updater code to run
+     * @param command The command to check
+     * @return true if the command is in the map, false otherwise
      */
-    public void updateFrom(int age) {
-
-        //No updater code needed, just update the version.
-        if (age == -1) {
-            updateVersion();
-            return;
-        }
-
-        //Updater code from age 1 goes here
-        if (age <= 1) {
-            //Since age 1 is an example for now, we will just let it do nothing.
-        }
-
-        //If we are updating from age 1 but we need more to reach age 2, this will run too.
-        if (age <= 2) {
-
-        }
-        updateVersion();
+    public boolean commandIsAliased(String command) {
+        return aliasMap.containsKey(command);
     }
 
     /**
-     * Update the version file.
-     */
-    public void updateVersion() {
-        try {
-            versionFile.createNewFile();
-            BufferedWriter vout = new BufferedWriter(new FileWriter(versionFile));
-            vout.write(this.getDescription().getVersion());
-            vout.close();
-        }
-        catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        catch (SecurityException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Get the current mcMMO version.
+     * Get the alias of a given command.
      *
-     * @return a String representing the current mcMMO version
+     * @param command The command to retrieve the alias of
+     * @return the alias of the command
      */
-    public String readVersion() {
-        byte[] buffer = new byte[(int) versionFile.length()];
-        BufferedInputStream f = null;
-
-        try {
-            f = new BufferedInputStream(new FileInputStream(versionFile));
-            f.read(buffer);
-        }
-        catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        finally {
-            if (f != null) {
-                try {
-                    f.close();
-                    }
-                catch (IOException ignored) {}
-            }
-        }
-        return new String(buffer);
-    }
-
-    /*
-     * Boilerplate Custom Config Stuff
-     */
-
-    private FileConfiguration treasuresConfig = null;
-    private File treasuresConfigFile = null;
-
-    /**
-     * Reload the Treasures.yml file.
-     */
-    public void reloadTreasuresConfig() {
-        if (treasuresConfigFile == null) {
-            treasuresConfigFile = new File(getDataFolder(), "treasures.yml");
-        }
-
-        treasuresConfig = YamlConfiguration.loadConfiguration(treasuresConfigFile);
-        InputStream defConfigStream = getResource("treasures.yml"); // Look for defaults in the jar
-
-        if (defConfigStream != null) {
-            YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-            treasuresConfig.setDefaults(defConfig);
-        }
+    public String getCommandAlias(String command) {
+        return aliasMap.get(command);
     }
 
     /**
-     * Get the Treasures config information.
+     * Add a set of values to the TNT tracker.
      *
-     * @return the configuration object for treasures.yml
+     * @param tntID The EntityID of the TNT
+     * @param playerName The name of the detonating player
      */
-    public FileConfiguration getTreasuresConfig() {
-        if (treasuresConfig == null) {
-            reloadTreasuresConfig();
-        }
-
-        return treasuresConfig;
+    public void addToTNTTracker(int tntID, String playerName) {
+        tntTracker.put(tntID, playerName);
     }
 
     /**
-     * Save the Treasures config informtion.
+     * Check to see if a given TNT Entity is tracked.
+     *
+     * @param tntID The EntityID of the TNT
+     * @return true if the TNT is being tracked, false otherwise
      */
-    public void saveTreasuresConfig() {
-        if (treasuresConfig == null || treasuresConfigFile == null) {
-            return;
-        }
+    public boolean tntIsTracked(int tntID) {
+        return tntTracker.containsKey(tntID);
+    }
 
-        try {
-            treasuresConfig.save(treasuresConfigFile);
-        }
-        catch (IOException ex) {
-            Bukkit.getLogger().severe("Could not save config to " + treasuresConfigFile + ex.toString());
-        }
+    /**
+     * Get the player who detonated the TNT.
+     *
+     * @param tntID The EntityID of the TNT
+     * @return the Player who detonated it
+     */
+    public Player getTNTPlayer(int tntID) {
+        return getServer().getPlayer(tntTracker.get(tntID));
+    }
+
+    /**
+     * Remove TNT from the tracker after it explodes.
+     *
+     * @param tntID The EntityID of the TNT
+     */
+    public void removeFromTNTTracker(int tntID) {
+        tntTracker.remove(tntID);
+    }
+
+    public static String getMainDirectory() {
+        return mainDirectory;
+    }
+
+    public static String getFlatFileDirectory() {
+        return flatFileDirectory;
+    }
+
+    public static String getUsersFile() {
+        return usersFile;
+    }
+
+    public static String getLeaderboardDirectory() {
+        return leaderboardDirectory;
+    }
+
+    public static String getModDirectory() {
+        return modDirectory;
+    }
+
+    public static Database getPlayerDatabase() {
+        return database;
     }
 }
+

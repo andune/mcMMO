@@ -3,17 +3,23 @@ package com.gmail.nossr50.runnables;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
-import org.bukkit.Bukkit;
-
-import com.gmail.nossr50.m;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.config.LoadProperties;
+import com.gmail.nossr50.config.Config;
+import com.gmail.nossr50.util.Database;
+import com.gmail.nossr50.util.Misc;
 
 public class SQLConversionTask implements Runnable {
+    private final mcMMO plugin;
+    private String tablePrefix = Config.getInstance().getMySQLTablePrefix();
+
+    public SQLConversionTask(mcMMO plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void run() {
-        String location = "plugins/mcMMO/FlatFileStuff/mcmmo.users";
+        Database database = mcMMO.getPlayerDatabase();
+        String location = mcMMO.getUsersFile();
 
         try {
             FileReader file = new FileReader(location);
@@ -160,111 +166,111 @@ public class SQLConversionTask implements Runnable {
                 }
 
                 //Check to see if the user is in the DB
-                id = mcMMO.database.getInt("SELECT id FROM "
-                        + LoadProperties.MySQLtablePrefix
+                id = database.getInt("SELECT id FROM "
+                        + tablePrefix
                         + "users WHERE user = '" + playerName + "'");
 
                 if (id > 0) {
                     theCount++;
 
                     //Update the skill values
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "users SET lastlogin = " + 0
                             + " WHERE id = " + id);
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "skills SET "
-                            + "  taming = taming+" + m.getInt(taming)
-                            + ", mining = mining+" + m.getInt(mining)
-                            + ", repair = repair+" + m.getInt(repair)
-                            + ", woodcutting = woodcutting+" + m.getInt(woodcutting)
-                            + ", unarmed = unarmed+" + m.getInt(unarmed)
-                            + ", herbalism = herbalism+" + m.getInt(herbalism)
-                            + ", excavation = excavation+" + m.getInt(excavation)
-                            + ", archery = archery+" + m.getInt(archery)
-                            + ", swords = swords+" + m.getInt(swords)
-                            + ", axes = axes+" + m.getInt(axes)
-                            + ", acrobatics = acrobatics+" + m.getInt(acrobatics)
-                            + ", fishing = fishing+" + m.getInt(fishing)
+                            + "  taming = taming+" + Misc.getInt(taming)
+                            + ", mining = mining+" + Misc.getInt(mining)
+                            + ", repair = repair+" + Misc.getInt(repair)
+                            + ", woodcutting = woodcutting+" + Misc.getInt(woodcutting)
+                            + ", unarmed = unarmed+" + Misc.getInt(unarmed)
+                            + ", herbalism = herbalism+" + Misc.getInt(herbalism)
+                            + ", excavation = excavation+" + Misc.getInt(excavation)
+                            + ", archery = archery+" + Misc.getInt(archery)
+                            + ", swords = swords+" + Misc.getInt(swords)
+                            + ", axes = axes+" + Misc.getInt(axes)
+                            + ", acrobatics = acrobatics+" + Misc.getInt(acrobatics)
+                            + ", fishing = fishing+" + Misc.getInt(fishing)
                             + " WHERE user_id = " + id);
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "experience SET "
-                            + "  taming = " + m.getInt(tamingXP)
-                            + ", mining = " + m.getInt(miningXP)
-                            + ", repair = " + m.getInt(repairXP)
-                            + ", woodcutting = " + m.getInt(woodCuttingXP)
-                            + ", unarmed = " + m.getInt(unarmedXP)
-                            + ", herbalism = " + m.getInt(herbalismXP)
-                            + ", excavation = " + m.getInt(excavationXP)
-                            + ", archery = " + m.getInt(archeryXP)
-                            + ", swords = " + m.getInt(swordsXP)
-                            + ", axes = " + m.getInt(axesXP)
-                            + ", acrobatics = " + m.getInt(acrobaticsXP)
-                            + ", fishing = " + m.getInt(fishingXP)
+                            + "  taming = " + Misc.getInt(tamingXP)
+                            + ", mining = " + Misc.getInt(miningXP)
+                            + ", repair = " + Misc.getInt(repairXP)
+                            + ", woodcutting = " + Misc.getInt(woodCuttingXP)
+                            + ", unarmed = " + Misc.getInt(unarmedXP)
+                            + ", herbalism = " + Misc.getInt(herbalismXP)
+                            + ", excavation = " + Misc.getInt(excavationXP)
+                            + ", archery = " + Misc.getInt(archeryXP)
+                            + ", swords = " + Misc.getInt(swordsXP)
+                            + ", axes = " + Misc.getInt(axesXP)
+                            + ", acrobatics = " + Misc.getInt(acrobaticsXP)
+                            + ", fishing = " + Misc.getInt(fishingXP)
                             + " WHERE user_id = " + id);
                 }
                 else {
                     theCount++;
 
                     //Create the user in the DB
-                    mcMMO.database.write("INSERT INTO "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("INSERT INTO "
+                            + tablePrefix
                             + "users (user, lastlogin) VALUES ('"
                             + playerName + "',"
                             + System.currentTimeMillis() / 1000 + ")");
-                    id = mcMMO.database.getInt("SELECT id FROM "
-                                    + LoadProperties.MySQLtablePrefix
+                    id = database.getInt("SELECT id FROM "
+                                    + tablePrefix
                                     + "users WHERE user = '"
                                     + playerName + "'");
-                    mcMMO.database.write("INSERT INTO "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("INSERT INTO "
+                            + tablePrefix
                             + "skills (user_id) VALUES (" + id + ")");
-                    mcMMO.database.write("INSERT INTO "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("INSERT INTO "
+                            + tablePrefix
                             + "experience (user_id) VALUES (" + id
                             + ")");
                     //Update the skill values
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "users SET lastlogin = " + 0
                             + " WHERE id = " + id);
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "users SET party = '" + party
                             + "' WHERE id = " + id);
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "skills SET "
-                            + "  taming = taming+" + m.getInt(taming)
-                            + ", mining = mining+" + m.getInt(mining)
-                            + ", repair = repair+" + m.getInt(repair)
-                            + ", woodcutting = woodcutting+" + m.getInt(woodcutting)
-                            + ", unarmed = unarmed+" + m.getInt(unarmed)
-                            + ", herbalism = herbalism+" + m.getInt(herbalism)
-                            + ", excavation = excavation+" + m.getInt(excavation)
-                            + ", archery = archery+" + m.getInt(archery)
-                            + ", swords = swords+" + m.getInt(swords)
-                            + ", axes = axes+" + m.getInt(axes)
-                            + ", acrobatics = acrobatics+" + m.getInt(acrobatics)
-                            + ", fishing = fishing+" + m.getInt(fishing)
+                            + "  taming = taming+" + Misc.getInt(taming)
+                            + ", mining = mining+" + Misc.getInt(mining)
+                            + ", repair = repair+" + Misc.getInt(repair)
+                            + ", woodcutting = woodcutting+" + Misc.getInt(woodcutting)
+                            + ", unarmed = unarmed+" + Misc.getInt(unarmed)
+                            + ", herbalism = herbalism+" + Misc.getInt(herbalism)
+                            + ", excavation = excavation+" + Misc.getInt(excavation)
+                            + ", archery = archery+" + Misc.getInt(archery)
+                            + ", swords = swords+" + Misc.getInt(swords)
+                            + ", axes = axes+" + Misc.getInt(axes)
+                            + ", acrobatics = acrobatics+" + Misc.getInt(acrobatics)
+                            + ", fishing = fishing+" + Misc.getInt(fishing)
                             + " WHERE user_id = " + id);
-                    mcMMO.database.write("UPDATE "
-                            + LoadProperties.MySQLtablePrefix
+                    database.write("UPDATE "
+                            + tablePrefix
                             + "experience SET "
-                            + "  taming = " + m.getInt(tamingXP)
-                            + ", mining = " + m.getInt(miningXP)
-                            + ", repair = " + m.getInt(repairXP)
-                            + ", woodcutting = " + m.getInt(woodCuttingXP)
-                            + ", unarmed = " + m.getInt(unarmedXP)
-                            + ", herbalism = " + m.getInt(herbalismXP)
-                            + ", excavation = " + m.getInt(excavationXP)
-                            + ", archery = " + m.getInt(archeryXP)
-                            + ", swords = " + m.getInt(swordsXP)
-                            + ", axes = " + m.getInt(axesXP)
-                            + ", acrobatics = " + m.getInt(acrobaticsXP)
-                            + ", fishing = " + m.getInt(fishingXP)
+                            + "  taming = " + Misc.getInt(tamingXP)
+                            + ", mining = " + Misc.getInt(miningXP)
+                            + ", repair = " + Misc.getInt(repairXP)
+                            + ", woodcutting = " + Misc.getInt(woodCuttingXP)
+                            + ", unarmed = " + Misc.getInt(unarmedXP)
+                            + ", herbalism = " + Misc.getInt(herbalismXP)
+                            + ", excavation = " + Misc.getInt(excavationXP)
+                            + ", archery = " + Misc.getInt(archeryXP)
+                            + ", swords = " + Misc.getInt(swordsXP)
+                            + ", axes = " + Misc.getInt(axesXP)
+                            + ", acrobatics = " + Misc.getInt(acrobaticsXP)
+                            + ", fishing = " + Misc.getInt(fishingXP)
                             + " WHERE user_id = " + id);
                 }
             }
@@ -273,7 +279,7 @@ public class SQLConversionTask implements Runnable {
             in.close();
         }
         catch (Exception e) {
-            Bukkit.getLogger().severe("Exception while reading " + location + " (Are you sure you formatted it correctly?)" + e.toString());
+            plugin.getLogger().severe("Exception while reading " + location + " (Are you sure you formatted it correctly?)" + e.toString());
         }
     }
 }

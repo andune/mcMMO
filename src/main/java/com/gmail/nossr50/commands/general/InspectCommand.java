@@ -1,126 +1,87 @@
 package com.gmail.nossr50.commands.general;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.m;
-import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.mcPermissions;
+import com.gmail.nossr50.commands.CommandHelper;
+import com.gmail.nossr50.datatypes.McMMOPlayer;
 import com.gmail.nossr50.datatypes.PlayerProfile;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.skills.Skills;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.Misc;
+import com.gmail.nossr50.util.Permissions;
+import com.gmail.nossr50.util.Users;
 
 public class InspectCommand implements CommandExecutor {
-    private final mcMMO plugin;
-
-    public InspectCommand(mcMMO instance) {
-        this.plugin = instance;
-    }
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        String usage = "Proper usage is /inspect <player>"; //TODO: Needs more locale.
 
-        Player player = null;
-        if (sender instanceof Player) {
-            player = (Player) sender;
-        }
-
-        if (sender instanceof Player  && !mcPermissions.getInstance().inspect(player)) {
-            sender.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.commands.inspect")) {
             return true;
         }
-        
-        if (args.length < 1) {
-            sender.sendMessage(ChatColor.RED + "Proper usage is /inspect <playername>"); //TODO: Needs more locale.
+
+        switch (args.length) {
+        case 1:
+            McMMOPlayer mcmmoPlayer = Users.getPlayer(args[0]);
+
+            if (mcmmoPlayer != null) {
+                Player target = mcmmoPlayer.getPlayer();
+
+                if (sender instanceof Player && !sender.isOp() && !Misc.isNear(((Player) sender).getLocation(), target.getLocation(), 5.0) && !Permissions.getInstance().inspectDistanceBypass((Player) sender)) {
+                    sender.sendMessage(LocaleLoader.getString("Inspect.TooFar"));
+                    return true;
+                }
+
+                sender.sendMessage(LocaleLoader.getString("Inspect.Stats", new Object[] { target.getName() }));
+                CommandHelper.printGatheringSkills(target, sender);
+                CommandHelper.printCombatSkills(target, sender);
+                CommandHelper.printMiscSkills(target, sender);
+                sender.sendMessage(LocaleLoader.getString("Commands.PowerLevel", new Object[] { mcmmoPlayer.getPowerLevel() }));
+
+                return true;
+            }
+            else {
+                if (sender instanceof Player && !sender.isOp() && !Permissions.getInstance().inspectOfflineBypass((Player) sender)) {
+                    sender.sendMessage(LocaleLoader.getString("Inspect.Offline"));
+                    return true;
+                }
+
+                PlayerProfile profile = new PlayerProfile(args[0], false); //Temporary Profile
+
+                if (!profile.isLoaded()) {
+                    sender.sendMessage(LocaleLoader.getString("Commands.DoesNotExist"));
+                    return true;
+                }
+
+                sender.sendMessage(LocaleLoader.getString("Inspect.OfflineStats", new Object[] { args[0] }));
+
+                sender.sendMessage(LocaleLoader.getString("Stats.Header.Gathering"));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Excavation.Listener"), profile.getSkillLevel(SkillType.EXCAVATION), profile.getSkillXpLevel(SkillType.EXCAVATION), profile.getXpToLevel(SkillType.EXCAVATION) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Fishing.Listener"), profile.getSkillLevel(SkillType.FISHING), profile.getSkillXpLevel(SkillType.FISHING), profile.getXpToLevel(SkillType.FISHING) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Herbalism.Listener"), profile.getSkillLevel(SkillType.HERBALISM), profile.getSkillXpLevel(SkillType.HERBALISM), profile.getXpToLevel(SkillType.HERBALISM) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Mining.Listener"), profile.getSkillLevel(SkillType.MINING), profile.getSkillXpLevel(SkillType.MINING), profile.getXpToLevel(SkillType.MINING) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Woodcutting.Listener"), profile.getSkillLevel(SkillType.WOODCUTTING), profile.getSkillXpLevel(SkillType.WOODCUTTING), profile.getXpToLevel(SkillType.WOODCUTTING) }));
+
+                sender.sendMessage(LocaleLoader.getString("Stats.Header.Combat"));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Axes.Listener"), profile.getSkillLevel(SkillType.AXES), profile.getSkillXpLevel(SkillType.AXES), profile.getXpToLevel(SkillType.AXES) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Archery.Listener"), profile.getSkillLevel(SkillType.ARCHERY), profile.getSkillXpLevel(SkillType.ARCHERY), profile.getXpToLevel(SkillType.ARCHERY) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Swords.Listener"), profile.getSkillLevel(SkillType.SWORDS), profile.getSkillXpLevel(SkillType.SWORDS), profile.getXpToLevel(SkillType.SWORDS) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Taming.Listener"), profile.getSkillLevel(SkillType.TAMING), profile.getSkillXpLevel(SkillType.TAMING), profile.getXpToLevel(SkillType.TAMING) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Unarmed.Listener"), profile.getSkillLevel(SkillType.UNARMED), profile.getSkillXpLevel(SkillType.UNARMED), profile.getXpToLevel(SkillType.UNARMED) }));
+
+                sender.sendMessage(LocaleLoader.getString("Stats.Header.Misc"));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Acrobatics.Listener"), profile.getSkillLevel(SkillType.ACROBATICS), profile.getSkillXpLevel(SkillType.ACROBATICS), profile.getXpToLevel(SkillType.ACROBATICS) }));
+                sender.sendMessage(LocaleLoader.getString("Skills.Stats", new Object[] { LocaleLoader.getString("Repair.Listener"), profile.getSkillLevel(SkillType.REPAIR), profile.getSkillXpLevel(SkillType.REPAIR), profile.getXpToLevel(SkillType.REPAIR) }));
+
+                return true;
+            }
+
+        default:
+            sender.sendMessage(usage);
             return true;
         }
-        
-        // if split[1] is an online player
-        if (plugin.getServer().getPlayer(args[0]) != null) 
-        {
-            Player target = plugin.getServer().getPlayer(args[0]);
-            PlayerProfile PPt = Users.getProfile(target);
-            
-            //If they are not an Op they have to be close
-            if(sender instanceof Player && !player.isOp() && !m.isNear(player.getLocation(), target.getLocation(), 5.0))
-            {
-                sender.sendMessage("You are too far away to inspect that player!"); //TODO: Needs more locale.
-            }
-            
-            sender.sendMessage(ChatColor.GREEN + "mcMMO Stats for " + ChatColor.YELLOW + target.getName()); //TODO: Needs more locale.
-
-            sender.sendMessage(ChatColor.GOLD + "-=GATHERING SKILLS=-"); //TODO: Needs more locale.
-            if (mcPermissions.getInstance().excavation(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.ExcavationSkill"), PPt.getSkillLevel(SkillType.EXCAVATION), PPt.getSkillXpLevel(SkillType.EXCAVATION), PPt.getXpToLevel(SkillType.EXCAVATION)));
-            if (mcPermissions.getInstance().fishing(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.FishingSkill"), PPt.getSkillLevel(SkillType.FISHING), PPt.getSkillXpLevel(SkillType.FISHING), PPt.getXpToLevel(SkillType.FISHING)));
-            if (mcPermissions.getInstance().herbalism(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.HerbalismSkill"), PPt.getSkillLevel(SkillType.HERBALISM), PPt.getSkillXpLevel(SkillType.HERBALISM), PPt.getXpToLevel(SkillType.HERBALISM)));
-            if (mcPermissions.getInstance().mining(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.MiningSkill"), PPt.getSkillLevel(SkillType.MINING), PPt.getSkillXpLevel(SkillType.MINING), PPt.getXpToLevel(SkillType.MINING)));
-            if (mcPermissions.getInstance().woodcutting(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.WoodcuttingSkill"), PPt.getSkillLevel(SkillType.WOODCUTTING), PPt.getSkillXpLevel(SkillType.WOODCUTTING), PPt.getXpToLevel(SkillType.WOODCUTTING)));
-
-            sender.sendMessage(ChatColor.GOLD + "-=COMBAT SKILLS=-"); //TODO: Needs more locale.
-            if (mcPermissions.getInstance().axes(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.AxesSkill"), PPt.getSkillLevel(SkillType.AXES), PPt.getSkillXpLevel(SkillType.AXES), PPt.getXpToLevel(SkillType.AXES)));
-            if (mcPermissions.getInstance().archery(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.ArcherySkill"), PPt.getSkillLevel(SkillType.ARCHERY), PPt.getSkillXpLevel(SkillType.ARCHERY), PPt.getXpToLevel(SkillType.ARCHERY)));
-            if (mcPermissions.getInstance().swords(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.SwordsSkill"), PPt.getSkillLevel(SkillType.SWORDS), PPt.getSkillXpLevel(SkillType.SWORDS), PPt.getXpToLevel(SkillType.SWORDS)));
-            if (mcPermissions.getInstance().taming(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.TamingSkill"), PPt.getSkillLevel(SkillType.TAMING), PPt.getSkillXpLevel(SkillType.TAMING), PPt.getXpToLevel(SkillType.TAMING)));
-            if (mcPermissions.getInstance().unarmed(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.UnarmedSkill"), PPt.getSkillLevel(SkillType.UNARMED), PPt.getSkillXpLevel(SkillType.UNARMED), PPt.getXpToLevel(SkillType.UNARMED)));
-
-            sender.sendMessage(ChatColor.GOLD + "-=MISC SKILLS=-"); //TODO: Needs more locale.
-            if (mcPermissions.getInstance().acrobatics(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.AcrobaticsSkill"), PPt.getSkillLevel(SkillType.ACROBATICS), PPt.getSkillXpLevel(SkillType.ACROBATICS), PPt.getXpToLevel(SkillType.ACROBATICS)));
-            if (mcPermissions.getInstance().repair(target))
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.RepairSkill"), PPt.getSkillLevel(SkillType.REPAIR), PPt.getSkillXpLevel(SkillType.REPAIR), PPt.getXpToLevel(SkillType.REPAIR)));
-
-            sender.sendMessage(mcLocale.getString("mcPlayerListener.PowerLevel") + ChatColor.GREEN + (PPt.getPowerLevel()));
-        } else {
-            if(sender instanceof Player && !player.isOp())
-            {
-                sender.sendMessage("That player is offline, inspecting offline players is limited to Ops!"); //TODO: Needs more locale.
-                return true;
-            }
-            
-            PlayerProfile PPt = Users.getOfflineProfile(args[0]);
-            
-            if(!PPt.isLoaded())
-            {
-                sender.sendMessage("Player does not exist in the database!"); //TODO: Needs more locale.
-                return true;
-            }
-            
-            sender.sendMessage(ChatColor.GREEN + "mcMMO Stats for Offline Player " + ChatColor.YELLOW + args[0]); //TODO: Needs more locale.
-
-            sender.sendMessage(ChatColor.GOLD + "-=GATHERING SKILLS=-"); //TODO: Needs more locale.
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.ExcavationSkill"), PPt.getSkillLevel(SkillType.EXCAVATION), PPt.getSkillXpLevel(SkillType.EXCAVATION), PPt.getXpToLevel(SkillType.EXCAVATION)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.FishingSkill"), PPt.getSkillLevel(SkillType.FISHING), PPt.getSkillXpLevel(SkillType.FISHING), PPt.getXpToLevel(SkillType.FISHING)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.HerbalismSkill"), PPt.getSkillLevel(SkillType.HERBALISM), PPt.getSkillXpLevel(SkillType.HERBALISM), PPt.getXpToLevel(SkillType.HERBALISM)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.MiningSkill"), PPt.getSkillLevel(SkillType.MINING), PPt.getSkillXpLevel(SkillType.MINING), PPt.getXpToLevel(SkillType.MINING)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.WoodcuttingSkill"), PPt.getSkillLevel(SkillType.WOODCUTTING), PPt.getSkillXpLevel(SkillType.WOODCUTTING), PPt.getXpToLevel(SkillType.WOODCUTTING)));
-
-            sender.sendMessage(ChatColor.GOLD + "-=COMBAT SKILLS=-"); //TODO: Needs more locale.
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.AxesSkill"), PPt.getSkillLevel(SkillType.AXES), PPt.getSkillXpLevel(SkillType.AXES), PPt.getXpToLevel(SkillType.AXES)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.ArcherySkill"), PPt.getSkillLevel(SkillType.ARCHERY), PPt.getSkillXpLevel(SkillType.ARCHERY), PPt.getXpToLevel(SkillType.ARCHERY)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.SwordsSkill"), PPt.getSkillLevel(SkillType.SWORDS), PPt.getSkillXpLevel(SkillType.SWORDS), PPt.getXpToLevel(SkillType.SWORDS)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.TamingSkill"), PPt.getSkillLevel(SkillType.TAMING), PPt.getSkillXpLevel(SkillType.TAMING), PPt.getXpToLevel(SkillType.TAMING)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.UnarmedSkill"), PPt.getSkillLevel(SkillType.UNARMED), PPt.getSkillXpLevel(SkillType.UNARMED), PPt.getXpToLevel(SkillType.UNARMED)));
-
-            sender.sendMessage(ChatColor.GOLD + "-=MISC SKILLS=-"); //TODO: Needs more locale.
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.AcrobaticsSkill"), PPt.getSkillLevel(SkillType.ACROBATICS), PPt.getSkillXpLevel(SkillType.ACROBATICS), PPt.getXpToLevel(SkillType.ACROBATICS)));
-                sender.sendMessage(Skills.getSkillStats(mcLocale.getString("mcPlayerListener.RepairSkill"), PPt.getSkillLevel(SkillType.REPAIR), PPt.getSkillXpLevel(SkillType.REPAIR), PPt.getXpToLevel(SkillType.REPAIR)));
-        }
-
-        return true;
     }
 }

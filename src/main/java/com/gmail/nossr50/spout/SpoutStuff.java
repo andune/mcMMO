@@ -8,40 +8,35 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.getspout.spoutapi.SpoutManager;
+import org.getspout.spoutapi.event.spout.SpoutCraftEnableEvent;
 import org.getspout.spoutapi.keyboard.Keyboard;
 import org.getspout.spoutapi.player.SpoutPlayer;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.m;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.datatypes.HUDmmo;
+import com.gmail.nossr50.config.SpoutConfig;
 import com.gmail.nossr50.datatypes.PlayerProfile;
-import com.gmail.nossr50.datatypes.popups.PopupMMO;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.listeners.mcSpoutInputListener;
-import com.gmail.nossr50.listeners.mcSpoutListener;
-import com.gmail.nossr50.listeners.mcSpoutScreenListener;
+import com.gmail.nossr50.listeners.SpoutListener;
+import com.gmail.nossr50.util.Misc;
+import com.gmail.nossr50.util.Users;
 
 public class SpoutStuff {
+    private static mcMMO plugin = mcMMO.p;
 
-    static mcMMO plugin = (mcMMO) Bukkit.getServer().getPluginManager().getPlugin("mcMMO");
+    public final static String spoutDirectory = mcMMO.getMainDirectory() + "Resources" + File.separator;
+    public final static String hudDirectory = spoutDirectory + "HUD" + File.separator;
+    public final static String hudStandardDirectory = hudDirectory + "Standard" + File.separator;
+    public final static String hudRetroDirectory = hudDirectory + "Retro" + File.separator;
+    public final static String soundDirectory = spoutDirectory + "Sound" + File.separator;
 
-    private final static mcSpoutListener spoutListener = new mcSpoutListener(plugin);
-    private final static mcSpoutInputListener spoutInputListener = new mcSpoutInputListener(plugin);
-    private final static mcSpoutScreenListener spoutScreenListener = new mcSpoutScreenListener(plugin);
-
-    public static HashMap<Player, HUDmmo> playerHUDs = new HashMap<Player, HUDmmo>();
-    public static HashMap<SpoutPlayer, PopupMMO> playerScreens = new HashMap<SpoutPlayer, PopupMMO>();
-
+    private final static SpoutListener spoutListener = new SpoutListener();
     public static Keyboard keypress;
 
     /**
@@ -50,32 +45,51 @@ public class SpoutStuff {
      * @param theFileName The name of the file
      * @param theFilePath The name of the file path
      */
-    public static void writeFile(String theFileName, String theFilePath) {
-        try {
-            File currentFile = new File("plugins/mcMMO/Resources/" + theFilePath + theFileName);
+    private static void writeFile(String theFileName, String theFilePath) {
+        OutputStream os = null;
+        JarFile jar = null;
 
-            @SuppressWarnings("static-access")
-            JarFile jar = new JarFile(plugin.mcmmo);
+        try {
+            File currentFile = new File(theFilePath + theFileName);
+
+            jar = new JarFile(mcMMO.mcmmo);
             JarEntry entry = jar.getJarEntry("resources/" + theFileName);
             InputStream is = jar.getInputStream(entry);
 
             byte[] buf = new byte[2048];
             int nbRead;
 
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(currentFile));
+            os = new BufferedOutputStream(new FileOutputStream(currentFile));
 
             while ((nbRead = is.read(buf)) != -1) {
                 os.write(buf, 0, nbRead);
             }
-
-            os.flush();
-            os.close();
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         catch (IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            if (os != null) {
+                try {
+                    os.flush();
+                    os.close();
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            if (jar != null) {
+                try {
+                    jar.close();
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
 
@@ -85,15 +99,14 @@ public class SpoutStuff {
     public static void extractFiles() {
 
         //Setup directories
-        new File("plugins/mcMMO/Resources/").mkdir();
-        new File("plugins/mcMMO/Resources/HUD/").mkdir();
-        new File("plugins/mcMMO/Resources/HUD/Standard/").mkdir();
-        new File("plugins/mcMMO/Resources/HUD/Retro/").mkdir();
-        new File("plugins/mcMMO/Resources/Sound/").mkdir();
+        new File(spoutDirectory).mkdir();
+        new File(hudDirectory).mkdir();
+        new File(hudStandardDirectory).mkdir();
+        new File(hudRetroDirectory).mkdir();
+        new File(soundDirectory).mkdir();
 
         //XP Bar images
         for (int x = 0; x < 255; x++) {
-            String theFilePath = "HUD/Standard/";
             String theFileName;
 
             if (x < 10) {
@@ -106,41 +119,36 @@ public class SpoutStuff {
                 theFileName = "xpbar_inc" + x + ".png";
             }
 
-            writeFile(theFileName, theFilePath);
+            writeFile(theFileName, hudStandardDirectory);
         }
 
         //Standard XP Icons
-        String standardFilePath = "HUD/Standard/";
-        String retroFilePath = "HUD/Retro/";
-
         for (SkillType y : SkillType.values()) {
             if (y.equals(SkillType.ALL)) {
                 continue;
             }
 
-            String standardFileName = m.getCapitalized(y.toString())+".png";
-            String retroFileName = m.getCapitalized(y.toString())+"_r.png";
+            String standardFileName = Misc.getCapitalized(y.toString())+".png";
+            String retroFileName = Misc.getCapitalized(y.toString())+"_r.png";
 
-            writeFile(standardFileName, standardFilePath);
-            writeFile(retroFileName, retroFilePath);
+            writeFile(standardFileName, hudStandardDirectory);
+            writeFile(retroFileName, hudRetroDirectory);
         }
 
         //Blank icons
-        writeFile("Icon.png", standardFilePath);
-        writeFile("Icon_r.png", retroFilePath);
+        writeFile("Icon.png", hudStandardDirectory);
+        writeFile("Icon_r.png", hudRetroDirectory);
 
         //Sound FX
-        String theSoundFilePath = "Sound/";
-
-        writeFile("repair.wav", theSoundFilePath);
-        writeFile("level.wav", theSoundFilePath);
+        writeFile("repair.wav", soundDirectory);
+        writeFile("level.wav", soundDirectory);
     }
 
     /**
      * Setup Spout config options
      */
     public static void setupSpoutConfigs() {
-        String temp = plugin.getConfig().getString("Spout.Menu.Key", "KEY_M");
+        String temp = SpoutConfig.getInstance().getMenuKey();
 
         for (Keyboard x : Keyboard.values()) {
             if (x.toString().equalsIgnoreCase(temp)) {
@@ -149,7 +157,7 @@ public class SpoutStuff {
         }
 
         if (keypress == null) {
-            System.out.println("Invalid KEY for Spout.Menu.Key, using KEY_M");
+            System.out.println("Invalid KEY for Menu.Key, using KEY_M");
             keypress = Keyboard.KEY_M;
         }
     }
@@ -161,18 +169,17 @@ public class SpoutStuff {
      */
     public static ArrayList<File> getFiles() {
         ArrayList<File> files = new ArrayList<File>();
-        String dir = "plugins/mcMMO/Resources/";
 
         /* XP BAR */
         for (int x = 0; x < 255; x++) {
             if (x < 10) {
-                files.add(new File(dir + "HUD/Standard/xpbar_inc00" + x + ".png"));
+                files.add(new File(hudStandardDirectory + "xpbar_inc00" + x + ".png"));
             }
             else if (x < 100) {
-                files.add(new File(dir + "HUD/Standard/xpbar_inc0" + x + ".png"));
+                files.add(new File(hudStandardDirectory  + "xpbar_inc0" + x + ".png"));
             }
             else {
-                files.add(new File(dir + "HUD/Standard/xpbar_inc" + x + ".png"));
+                files.add(new File(hudStandardDirectory  + "xpbar_inc" + x + ".png"));
             }
         }
 
@@ -182,19 +189,19 @@ public class SpoutStuff {
                 continue;
             }
 
-            files.add(new File(dir + "HUD/Standard/" + m.getCapitalized(y.toString()) + ".png"));
-            files.add(new File(dir + "HUD/Retro/" + m.getCapitalized(y.toString()) + "_r.png"));
+            files.add(new File(hudStandardDirectory + Misc.getCapitalized(y.toString()) + ".png"));
+            files.add(new File(hudRetroDirectory + Misc.getCapitalized(y.toString()) + "_r.png"));
         }
-        
+
         /* Blank icons */
-        files.add(new File(dir + "HUD/Standard/Icon.png"));
-        files.add(new File(dir + "HUD/Retro/Icon_r.png"));
+        files.add(new File(hudStandardDirectory + "Icon.png"));
+        files.add(new File(hudRetroDirectory + "Icon_r.png"));
 
         //Repair SFX
-        files.add(new File(dir + "Sound/repair.wav"));
+        files.add(new File(soundDirectory + "repair.wav"));
 
         //Level SFX
-        files.add(new File(dir + "Sound/level.wav"));
+        files.add(new File(soundDirectory + "level.wav"));
 
         return files;
     }
@@ -203,35 +210,18 @@ public class SpoutStuff {
      * Register custom Spout events.
      */
     public static void registerCustomEvent() {
-        Bukkit.getServer().getPluginManager().registerEvents(spoutListener, plugin);
-        Bukkit.getServer().getPluginManager().registerEvents(spoutInputListener, plugin);
-        Bukkit.getServer().getPluginManager().registerEvents(spoutScreenListener, plugin);
-    }
-
-    /**
-     * Gets a Spout player from a player name.
-     *
-     * @param playerName The player name
-     * @return the SpoutPlayer related to this player name, null if there's no player online with that name.
-     */
-    public static SpoutPlayer getSpoutPlayer(String playerName) {
-        for (Player x : Bukkit.getServer().getOnlinePlayers()) {
-            if (x.getName().equalsIgnoreCase(playerName)) {
-                return SpoutManager.getPlayer(x);
-            }
-        }
-        return null;
+        plugin.getServer().getPluginManager().registerEvents(spoutListener, plugin);
     }
 
     /**
      * Handle level-up notifications through Spout.
      *
      * @param skillType The skill that leveled up
-     * @param sPlayer The player that leveled up
+     * @param spoutPlayer The player that leveled up
      */
-    public static void levelUpNotification(SkillType skillType, SpoutPlayer sPlayer) {
-        PlayerProfile PP = Users.getProfile(sPlayer);
-        int notificationTier = getNotificationTier(PP.getSkillLevel(skillType));
+    public static void levelUpNotification(SkillType skillType, SpoutPlayer spoutPlayer) {
+        PlayerProfile profile = Users.getProfile(spoutPlayer);
+        int notificationTier = getNotificationTier(profile.getSkillLevel(skillType));
         Material mat = null;
 
         switch (skillType) {
@@ -547,8 +537,8 @@ public class SpoutStuff {
         }
 
         //TODO: Use Locale
-        sPlayer.sendNotification(ChatColor.GREEN + "Level Up!", ChatColor.YELLOW + m.getCapitalized(skillType.toString()) + ChatColor.DARK_AQUA + " (" + ChatColor.GREEN + PP.getSkillLevel(skillType) + ChatColor.DARK_AQUA + ")", mat);
-        SpoutSounds.playLevelUpNoise(sPlayer);
+        spoutPlayer.sendNotification(ChatColor.GREEN + "Level Up!", ChatColor.YELLOW + Misc.getCapitalized(skillType.toString()) + ChatColor.DARK_AQUA + " (" + ChatColor.GREEN + profile.getSkillLevel(skillType) + ChatColor.DARK_AQUA + ")", mat);
+        SpoutSounds.playLevelUpNoise(spoutPlayer, plugin);
     }
 
     /**
@@ -576,11 +566,21 @@ public class SpoutStuff {
     }
 
     /**
-     * Update a player's Spout XP bar.
-     *
-     * @param player The player whose bar to update
+     * Re-enable SpoutCraft for players after a /reload
      */
-    public static void updateXpBar(Player player) {
-        playerHUDs.get(player).updateXpBarDisplay(Users.getProfile(player).getHUDType(), player); //Is there a reason we can't just do HUDmmo.updateXpBarDisplay?
+    public static void reloadSpoutPlayers() {
+        for (SpoutPlayer spoutPlayer : SpoutManager.getPlayerManager().getOnlinePlayers()) {
+            SpoutCraftEnableEvent spoutCraftEnableEvent = new SpoutCraftEnableEvent(spoutPlayer);
+            mcMMO.p.getServer().getPluginManager().callEvent(spoutCraftEnableEvent);
+        }
+    }
+
+    public static void reloadSpoutPlayer(Player player) {
+        SpoutPlayer spoutPlayer = SpoutManager.getPlayer(player);
+
+        if (spoutPlayer != null) {
+            SpoutCraftEnableEvent spoutCraftEnableEvent = new SpoutCraftEnableEvent(spoutPlayer);
+            mcMMO.p.getServer().getPluginManager().callEvent(spoutCraftEnableEvent);
+        }
     }
 }

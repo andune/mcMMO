@@ -1,50 +1,55 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.util.Page;
+import com.gmail.nossr50.locale.LocaleLoader;
 
-public class ExcavationCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class ExcavationCommand extends SkillCommand {
+    private String gigaDrillBreakerLength;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    private boolean canGigaDrill;
+    private boolean canTreasureHunt;
 
-		int ticks = 2;
-		int x = PP.getSkillLevel(SkillType.EXCAVATION);
-		while (x >= 50) {
-			x -= 50;
-			ticks++;
-		}
+    public ExcavationCommand() {
+        super(SkillType.EXCAVATION);
+    }
 
-		player.sendMessage("");
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillExcavation") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainExcavation") }));
+    @Override
+    protected void dataCalculations() {
+        gigaDrillBreakerLength = String.valueOf(2 + ((int) skillValue / 50));
+    }
 
-		if (mcPermissions.getInstance().excavation(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.EXCAVATION), PP.getSkillXpLevel(SkillType.EXCAVATION), PP.getXpToLevel(SkillType.EXCAVATION) }));
+    @Override
+    protected void permissionsCheck() {
+        canGigaDrill = permInstance.gigaDrillBreaker(player);
+        canTreasureHunt = permInstance.excavationTreasures(player);
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsExcavation1_0"), mcLocale.getString("m.EffectsExcavation1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsExcavation2_0"), mcLocale.getString("m.EffectsExcavation2_1") }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
-		player.sendMessage(mcLocale.getString("m.ExcavationGigaDrillBreakerLength", new Object[] { ticks }));
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return canGigaDrill || canTreasureHunt;
+    }
 
-		Page.grabGuidePageForSkill(SkillType.EXCAVATION, player, args);
-		
-		return true;
-	}
+    @Override
+    protected void effectsDisplay() {
+        if (canGigaDrill) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Excavation.Effect.0"), LocaleLoader.getString("Excavation.Effect.1") }));
+        }
+
+        if (canTreasureHunt) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Excavation.Effect.2"), LocaleLoader.getString("Excavation.Effect.3") }));
+        }
+    }
+
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return canGigaDrill;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        if (canGigaDrill) {
+            player.sendMessage(LocaleLoader.getString("Excavation.Effect.Length", new Object[] { gigaDrillBreakerLength }));
+        }
+    }
 }

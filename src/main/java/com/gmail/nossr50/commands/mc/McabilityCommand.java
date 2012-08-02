@@ -1,44 +1,38 @@
 package com.gmail.nossr50.commands.mc;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
+import com.gmail.nossr50.commands.CommandHelper;
 import com.gmail.nossr50.datatypes.PlayerProfile;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.Users;
 
 public class McabilityCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Player player = null;
-        if (sender instanceof Player) {
-            player = (Player) sender;
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (CommandHelper.noConsoleUsage(sender)) {
+            return true;
         }
 
-		if (player != null && !mcPermissions.getInstance().mcAbility(player)) {
-			player.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
-			return true;
-		}
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.commands.ability")) {
+            return true;
+        }
 
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+        PlayerProfile profile = Users.getProfile((Player) sender);
 
-		PlayerProfile PP = Users.getProfile(player);
+        if (profile.getAbilityUse()) {
+            sender.sendMessage(LocaleLoader.getString("Commands.Ability.Off"));
+        }
+        else {
+            sender.sendMessage(LocaleLoader.getString("Commands.Ability.On"));
+        }
 
-		if (PP.getAbilityUse()) {
-			player.sendMessage(mcLocale.getString("mcPlayerListener.AbilitiesOff"));
-			PP.toggleAbilityUse();
-		} else {
-			player.sendMessage(mcLocale.getString("mcPlayerListener.AbilitiesOn"));
-			PP.toggleAbilityUse();
-		}
+        profile.toggleAbilityUse();
 
-		return true;
-	}
+        return true;
+    }
 }

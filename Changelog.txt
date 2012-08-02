@@ -7,8 +7,175 @@ Key:
   ! Change
   - Removal
 
-Version 1.3.05-dev
- + Added bonus damage to Archery, every 50 levels you gain 10% bonus damage
+Version 1.3.10-dev
+ + Added permission node for Iron Grip ability (mcmmo.ability.unarmed.irongrip)
+ + Added ability for custom blocks to drop a range of items.
+ + Added Ability API functions
+ + Added 50% & 150% XP boost perks
+ + Added "lucky" perk for donors
+ = Fixed /inspect not working on offline players
+ = Fixed custom blocks, tools and armors not loading properly
+ = Fixed duplication bug with sticky pistons
+ = Fixed "GenericLabel belonging to mcMMO..." message
+ = Fixed menu exit button not working
+ = Fixed Repair enchant downgrade not working
+ = Fixed NPE caused by Spout players after a /reload
+ = Fixed ConcurrentModificationException on world unload
+ = Fixed players never being removed from memory (memory leak)
+ = Fixed admin chat being seen by everyone
+ = Fixed issue with UTFDataFormatException occurring on occasion when trying to load Chunklets
+ = Fixed ArrayIndexOutOfBounds error caused when trying to use /xplock after logging in but before gaining XP
+ = Fixed custom tools not properly respecting the Ability_Enabled flag.
+ = Fixed "lower tool" messages still being displayed even when ability messages are disabled.
+ = Fixed custom blocks not dropping the proper item with Super Breaker when Silk Touch is used
+ = Fixed custom woodcutting blocks throwing errors.
+ = Fixed possible ClassCastException from catching something other than a mob when using the Shake Mob skill
+ ! Changed the format by which Chunklets are stored to be much smaller, and much faster to load
+ ! Optimized how player placed blocks are tracked
+
+Version 1.3.09
+ + Added compatibility with AntiCheat (Which I highly recommend to prevent cheating)
+ + Added several permission nodes to give individual users special perks (Double/Triple/Quadruple XP)
+ + Added reduced cooldown permission nodes as special perks (1/4, 1/3, 1/2 cooldown)
+ + Added increased activation time permissions nodes as special perks (+4, +8, and +12 seconds)
+ + Added API for plugins to add custom tools directly via Spout - repair / abilities do not work ATM
+ + Added offline party members to the list displayed by /party
+ + Added possibility to kick offline members from parties
+ = Fixed bug that would cause a NPE for players that had no parties
+ = Fixed Vampirism not notifying the correct amount of stolen levels
+ = Fixed bug with Acrobatics not saving you from deadly falls
+ = Fixed /mcremove being applied only after a reload
+ = Fixed Archery PVE disablement not working properly
+ = Fixed possible NPE when a projectile is shot by a dispenser or doesn't have any shooter
+ = Fixed issue with NoCheatPlus and Serrated Strikes / Skull Splitter (fight.noswing)
+ = Fixed tiny memory leak concerning Archery
+ = Fixed bug where you could receive Archery XP from Potions
+ = Fixed bug where Chunklets for the < 64 y coordinates would not be properly loaded
+ = Fixed exploit with block duplication via piston pushing
+ = Fixed bug with falling sand/gravel not being tracked
+ = Fixed bug with Tree Feller not working with custom axes
+ = Fixed bug with locale strings when trying to teleport to a non-existent player
+ = Fixed bug with Tree Feller changing durability before checking for axe splintering
+ = Fixed bug with Repair Mastery permission due to typo
+ = Fixed bug with repairing items that use metadata
+ = Fixed bug with Chunklets not being reloaded on /reload
+ = Fixed possible NPE when falling with no item in hand
+ ! API methods can now only be used in a static way
+ ! Arrows shot from a bow having the Infinity enchantment can no longer be retrieved
+ ! Arrows that aren't shot by an entity are now able to be dodged (currently only from dispensers)
+ ! Changed Spout settings to be in their own config file (spout.yml)
+ ! Changed file format for parties (parties.yml), previous files are no longer used
+ ! Changed mcMMO to inform on corrupt Chunklets and make new ones
+
+Version 1.3.08
+ + Added more notifications about Vampirism and Hardcore mode on player death
+ + Added information about Hardcore mode when joining a server running Hardcore mode
+ + Added new hidden.yml inside the jar for very sensitive config options for advanced users
+ + Added option to disable Chunklets for servers which do not have doubledrops and do not care about xp farming
+ + Added new "Max_Seconds" setting in config.yml to limit the max time of abilities
+ + Added new repair configs to allow customization of the repair skill
+ + Added message to inform users about hardcore mode on login
+ = Fixed exploit where you could gain tons of Acrobatics XP from spamming Ender Pearls
+ = Fixed normal pistons marking a block as user-placed on retract if it wasn't a sticky piston (thanks turt2live!)
+ = Fixed handling of the Unbreaking enchantment so that tools are actually damaged as they should now
+ = Fixed hurting pet cats with serrated strikes
+ ! Changed Hardcore Vampirism to require the victim to have at least half the skill level of the killer in order for vampirism to proc (this is to avoid exploitation)
+ ! Changed Hardcore Vampirism to steal a minimum of 1 skill level from a player no matter the percentage
+ ! Changed Hardcore & Vampirism to not be executed if percentages were set to zero or below
+ ! Changed Vampirism to actually remove stats from the victim
+ ! Changed Vampirism to inform the victim of their stat loss
+ ! Changed Mining to allow Silk Touch to work again since the dupe exploit has been fixed.
+ ! Changed Metrics to also report if the server uses plugin profiling
+ - Removed level and item settings from Repair skill in config.yml
+
+Version 1.3.07
+ + Added ability to gain XP from custom blocks. Enable custom blocks in the config file, then enter the data in the blocks.yml file.
+ + Added ability to gain XP with custom tools. Enable custom tools in the config file, then enter the data in the tools.yml file.
+ + Added ability to repair custom tools. Enable custom tools in the config file, then enter the data in the tools.yml file.
+ + Added ability to repair custom armor. Enable custom armor in the config file, then enter the data in the armor.yml file.
+ + Added functionality which makes a new folder in all world files "mcmmo_data" to store player placed block information in
+ + Added new configurable Hardcore mode functionality to mcMMO
+ + Added new configurable Vampirism PVP stat leech for Hardcore mode
+ + Added new bypass permission node for the negative penalties of Hardcore mode 'mcmmo.bypass.hardcoremode'
+ + Added configurable level curve multiplier which allows for tweaking the steepness of the XP needed to level formula
+ + Added a permission node for Archery bonus damage
+ + Added a permission node for Greater Impact ability
+ + Added permission nodes for Treasure & Magic Hunter for Fishing
+ + Added a permission node for Farmer's Diet
+ + Added config options for enabling/disabling specific double drops
+ + Added automatic zip backup of flatfile database & config files
+ + Added config options to enable/disable specific skills for PVP & PVE
+ = Fixed bug where Tree Feller was looking at the wrong blocks for determining how much to take down.
+ = Fixed bug where Green Terra consumed seeds even on Mossy Stone Brick
+ = Fixed bug where the client didn't reflect the Stone Brick to Mossy Stone Brick change
+ = Fixed bug where an arrow could bounce off entities on daze proc
+ = Fixed bug where a player could gain Acrobatics experience while riding a cart
+ = Fixed /party not working properly with 2 arguments
+ = Fixed /party not showing properly the member list
+ = Fixed /ability not checking the right permission
+ = Fixed rare NPE on /party command
+ = Fixed Arrow Retrieval dropping only one arrow
+ = Fixed /p and /a incompatibilities with bChatManager
+ = Fixed Iron Grip working reversely
+ = Fixed NPE when user clicked the HUD button with Spout
+ = Fixed bug where the permission node for Impact didn't work
+ = Fixed some bypass nodes defaulting true for Ops
+ = Fixed bug with trying to use Chimera Wing while standing on a half-block
+ = Fixed duplication bug when a placed block was mined after a server restart
+ = Fixed exploit where shooting yourself with an arrow gave Archery XP
+ ! Changed the mcMMO motd to link to the new website rather than the wiki
+ ! Changed bleeding ticks damage to 1 from 2
+ ! Changed Mining to ignore blocks when the pick is enchanted with Silk Touch
+ ! Changed Super Breaker to be non-functional when used with a Silk Touch enchanted pick
+ ! Changed MySQL to save player information 50ms apart from each other to reduce the load on the MySQL server
+ ! Changed the permission node for Blast Mining detonation to mcmmo.ability.blastmining.detonate (was mcmmo.skills.blastmining) for the sake of consistency
+ ! Changed skill commands to only display what you have permissions for
+ ! Changed mcMMO to use a new storage system for player placed blocks
+ - Removed some unused permission nodes
+ - Removed a few config options in favor of permissions nodes (Hunger Bonus, Armor/Tool Repair, Instant Wheat Regrowth)
+ - Removed level requirement for repairing string tools from the config file
+
+Version 1.3.06
+ + Added Iron Golem XP for aggressive golems
+ + Added permissions check to skill functions
+ + Added API functions for obtaining offline profiles & profiles via player names
+ + Added API functions for admin & party chat
+ + Added Iron Grip skill to Unarmed which gives players an chance to keep from being disarmed.
+ + Added some new languages to the locale files.
+ = Fixed Green Thumb consuming 2 seeds instead of 1
+ = Fixed exploit where you could teleport to yourself with PTP to prevent things like fall damage
+ = Fixed NPE error with Metrics on startup
+ = Fixed bug where Herbalism required double drops permission to give XP
+ = Fixed bug where {0} would be displayed in front of your power level in mcstats
+ = Fixed mmoupdate not being useable from console
+ = Fixed bug with repairing wooden tools
+ = Fixed bug with Nether Wart not awarding XP
+ = Fixed bug with fishing treasures when treasures list is empty
+ = Fixed bug with only getting one level when there was enough XP for multiple levels.
+ = Fixed bugs with the way /mctop displayed
+ = Fixed issues with custom characters & locale files.
+ = Fixed double explosion for Blast Mining
+ = Fixed Blast Mining not giving triple drops when it should
+ ! Changed Bleeding to now stack to a finite number on Monsters and will wear off eventually
+ ! Changed how we handled the config file to prevent any bugs when returning values
+ ! Changed locale files to use a new naming scheme. This breaks ALL old locale files. If you want to assist with re-translating anything, go to getlocalization.com/mcMMO
+ ! Changed /mcremove to check for users in the MySQL DB before sending queries to remove them
+ ! Changed how the tree feller threshold worked for the better
+ ! Changed /mcremove to no longer kick players when they are removed from database
+ ! Changed /mcremove to work on offline users for FlatFile
+ ! Changed PlayerProfile constructor to always take a boolean
+ ! Changed getPlayerProfile function to work for online & offline users
+ ! Changed Archery's Daze to deal 4 DMG on proc (2 Hearts)
+ ! Changed /addlevel command to work for offline users
+ ! Changed party & admin chat handling to be nicer to developers
+ ! Changed /mcrefresh to work from console
+ ! Changed /mcrefresh to work for offline players
+ ! Changed UpdateXPBar function to hopefully avoid errors
+ ! Changed /party to show offline party members
+ ! Changed Blast Mining requirements, now asks for the player to be crouching
+
+Version 1.3.05
+ + Added Skill Shot to Archery which increases damage dealt by 10% every 50 skill levels (caps at 200%)
  + Added ExperienceAPI and PartyAPI classes for developer use
  + Added ability to cap overall power level
  + Added showing powerlevel below a persons name if you run Spout (optional)
@@ -19,8 +186,11 @@ Version 1.3.05-dev
  = Fixed bug where rare Treasures from Excavation were dropping too often
  = Fixed bug where Skull Splitter & Serrated Strikes could be used without permissions.
  = Fixed bug where API functions were set to static
+ = Fixed bug where mmoedit threw errors when modifying an offline user
+ = Fixed dupe exploit with Blast Mining
  ! Changed Tree Feller to account for ability durability loss but not leaves.
  ! Changed bypass node for Arcane Forging to not default to true for OPs
+ - Removed Ignition from Archery
  - Removed McMMOPlayerRepairEvent - was basically a duplicate of McMMOPlayerRepairCheck but couldn't be cancelled.
 
 Version 1.3.04

@@ -2,11 +2,13 @@ package com.gmail.nossr50.api;
 
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.skills.Skills;
+import com.gmail.nossr50.util.Skills;
+import com.gmail.nossr50.util.Users;
 
-public class ExperienceAPI {
+public final class ExperienceAPI {
+
+    private ExperienceAPI() {}
 
     /**
      * Check the XP of a player. This should be called after giving XP to process level-ups.
@@ -14,12 +16,12 @@ public class ExperienceAPI {
      * @param player The player to check
      * @param skillType The skill to check
      */
-    private void checkXP(Player player, SkillType skillType) {
+    private static void checkXP(Player player, SkillType skillType) {
         if (skillType.equals(SkillType.ALL)) {
-            Skills.XpCheckAll(player);
+            Skills.xpCheckAll(player, Users.getProfile(player));
         }
         else {
-            Skills.XpCheckSkill(skillType, player);
+            Skills.xpCheckSkill(skillType, player, Users.getProfile(player));
         }
     }
 
@@ -32,8 +34,8 @@ public class ExperienceAPI {
      * @param skillType The skill to add XP to
      * @param XP The amount of XP to add
      */
-    public void addRawXP(Player player, SkillType skillType, int XP) {
-        Users.getProfile(player).addXPOverride(skillType, XP);
+    public static void addRawXP(Player player, SkillType skillType, int XP) {
+        Users.getPlayer(player).addXPOverride(skillType, XP);
         checkXP(player, skillType);
     }
 
@@ -46,8 +48,8 @@ public class ExperienceAPI {
      * @param skillType The skill to add XP to
      * @param XP The amount of XP to add
      */
-    public void addMultipliedXP(Player player, SkillType skillType, int XP) {
-        Users.getProfile(player).addXPOverrideBonus(skillType, XP);
+    public static void addMultipliedXP(Player player, SkillType skillType, int XP) {
+        Users.getPlayer(player).addXPOverrideBonus(skillType, XP);
         checkXP(player, skillType);
     }
 
@@ -60,8 +62,8 @@ public class ExperienceAPI {
      * @param skillType The skill to add XP to
      * @param XP The amount of XP to add
      */
-    public void addXP(Player player, SkillType skillType, int XP) {
-        Users.getProfile(player).addXP(skillType, XP);
+    public static void addXP(Player player, SkillType skillType, int XP) {
+        Users.getPlayer(player).addXP(skillType, XP);
         checkXP(player, skillType);
     }
 
@@ -74,7 +76,7 @@ public class ExperienceAPI {
      * @param skillType The skill to get XP for
      * @return the amount of XP in a given skill
      */
-    public int getXP(Player player, SkillType skillType) {
+    public static int getXP(Player player, SkillType skillType) {
         return Users.getProfile(player).getSkillXpLevel(skillType);
     }
 
@@ -87,7 +89,7 @@ public class ExperienceAPI {
      * @param skillType The skill to get the XP amount for
      * @return the amount of XP left before leveling up a specifc skill
      */
-    public int getXPToNextLevel(Player player, SkillType skillType) {
+    public static int getXPToNextLevel(Player player, SkillType skillType) {
         return Users.getProfile(player).getXpToLevel(skillType);
     }
 
@@ -101,7 +103,7 @@ public class ExperienceAPI {
      * @param levels Number of levels to add
      * @param notify True if this should fire a level up notification, false otherwise.
      */
-    public void addLevel(Player player, SkillType skillType, int levels, boolean notify) {
+    public static void addLevel(Player player, SkillType skillType, int levels, boolean notify) {
         Users.getProfile(player).addLevels(skillType, levels);
 
         if (notify) {
@@ -118,7 +120,7 @@ public class ExperienceAPI {
      * @param skillType The skill to get the level for
      * @return the level of a given skill
      */
-    public int getLevel(Player player, SkillType skillType) {
+    public static int getLevel(Player player, SkillType skillType) {
         return Users.getProfile(player).getSkillLevel(skillType);
     }
 
@@ -130,7 +132,46 @@ public class ExperienceAPI {
      * @param player The player to get the power level for
      * @return the power level of the player
      */
-    public int getPowerLevel(Player player) {
-        return Users.getProfile(player).getPowerLevel();
+    public static int getPowerLevel(Player player) {
+        return Users.getPlayer(player).getPowerLevel();
+    }
+
+    /**
+     * Sets the level of a player in a specific skill type.
+     * </br>
+     * This function is designed for API usage.
+     *
+     * @param player The player to set the level of
+     * @param skillType The skill to set the level for
+     * @param skillLevel The value to set the level to
+     */
+    public static void setLevel(Player player, SkillType skillType, int skillLevel) {
+        Users.getProfile(player).modifySkill(skillType, skillLevel);
+    }
+
+    /**
+     * Sets the XP of a player in a specific skill type.
+     * </br>
+     * This function is designed for API usage.
+     *
+     * @param player The player to set the XP of
+     * @param skillType The skill to set the XP for
+     * @param newValue The value to set the XP to
+     */
+    public static void setXP(Player player, SkillType skillType, int newValue) {
+        Users.getProfile(player).setSkillXPLevel(skillType, newValue);
+    }
+
+    /**
+     * Removes XP from a player in a specific skill type.
+     * </br>
+     * This function is designed for API usage.
+     *
+     * @param player The player to change the XP of
+     * @param skillType The skill to change the XP for
+     * @param xp The amount of XP to remove
+     */
+    public static void removeXP(Player player, SkillType skillType, int xp) {
+        Users.getProfile(player).removeXP(skillType, xp);
     }
 }

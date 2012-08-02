@@ -2,24 +2,24 @@ package com.gmail.nossr50.datatypes;
 
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.config.LoadProperties;
+import com.gmail.nossr50.config.Config;
+import com.gmail.nossr50.util.Permissions;
+import com.gmail.nossr50.util.Users;
 
 public enum SkillType {
-    ACROBATICS(LoadProperties.levelCapAcrobatics, LoadProperties.acrobaticsxpmodifier),
+    ACROBATICS(Config.getInstance().getLevelCapAcrobatics(), Config.getInstance().getFormulaMultiplierAcrobatics()),
     ALL, //This one is just for convenience
-    ARCHERY(LoadProperties.levelCapArchery, LoadProperties.archeryxpmodifier),
-    AXES(AbilityType.SKULL_SPLIITER, LoadProperties.levelCapAxes, ToolType.AXE, LoadProperties.axesxpmodifier),
-    EXCAVATION(AbilityType.GIGA_DRILL_BREAKER, LoadProperties.levelCapExcavation, ToolType.SHOVEL, LoadProperties.excavationxpmodifier),
-    FISHING(LoadProperties.levelCapFishing, LoadProperties.fishingxpmodifier),
-    HERBALISM(AbilityType.GREEN_TERRA, LoadProperties.levelCapHerbalism, ToolType.HOE, LoadProperties.herbalismxpmodifier),
-    MINING(AbilityType.SUPER_BREAKER, LoadProperties.levelCapMining, ToolType.PICKAXE, LoadProperties.miningxpmodifier),
-    REPAIR(LoadProperties.levelCapRepair, LoadProperties.repairxpmodifier),
-    SWORDS(AbilityType.SERRATED_STRIKES, LoadProperties.levelCapSwords, ToolType.SWORD, LoadProperties.swordsxpmodifier),
-    TAMING(LoadProperties.levelCapTaming, LoadProperties.tamingxpmodifier),
-    UNARMED(AbilityType.BERSERK, LoadProperties.levelCapUnarmed, ToolType.FISTS, LoadProperties.unarmedxpmodifier),
-    WOODCUTTING(AbilityType.TREE_FELLER, LoadProperties.levelCapWoodcutting, ToolType.AXE, LoadProperties.woodcuttingxpmodifier);
+    ARCHERY(Config.getInstance().getLevelCapArchery(), Config.getInstance().getFormulaMultiplierArchery()),
+    AXES(AbilityType.SKULL_SPLIITER, Config.getInstance().getLevelCapAxes(), ToolType.AXE, Config.getInstance().getFormulaMultiplierAxes()),
+    EXCAVATION(AbilityType.GIGA_DRILL_BREAKER, Config.getInstance().getLevelCapExcavation(), ToolType.SHOVEL, Config.getInstance().getFormulaMultiplierExcavation()),
+    FISHING(Config.getInstance().getLevelCapFishing(), Config.getInstance().getFormulaMultiplierFishing()),
+    HERBALISM(AbilityType.GREEN_TERRA, Config.getInstance().getLevelCapHerbalism(), ToolType.HOE, Config.getInstance().getFormulaMultiplierHerbalism()),
+    MINING(AbilityType.SUPER_BREAKER, Config.getInstance().getLevelCapMining(), ToolType.PICKAXE, Config.getInstance().getFormulaMultiplierMining()),
+    REPAIR(Config.getInstance().getLevelCapRepair(), Config.getInstance().getFormulaMultiplierRepair()),
+    SWORDS(AbilityType.SERRATED_STRIKES, Config.getInstance().getLevelCapSwords(), ToolType.SWORD, Config.getInstance().getFormulaMultiplierSwords()),
+    TAMING(Config.getInstance().getLevelCapTaming(), Config.getInstance().getFormulaMultiplierTaming()),
+    UNARMED(AbilityType.BERSERK, Config.getInstance().getLevelCapUnarmed(), ToolType.FISTS, Config.getInstance().getFormulaMultiplierUnarmed()),
+    WOODCUTTING(AbilityType.TREE_FELLER, Config.getInstance().getLevelCapWoodcutting(), ToolType.AXE, Config.getInstance().getFormulaMultiplierWoodcutting());
 
     private AbilityType ability;
     private int maxLevel;
@@ -75,40 +75,40 @@ public enum SkillType {
     public boolean getPermissions(Player player) {
         switch (this) {
         case ACROBATICS:
-            return mcPermissions.getInstance().acrobatics(player);
+            return Permissions.getInstance().acrobatics(player);
 
         case ARCHERY:
-            return mcPermissions.getInstance().archery(player);
+            return Permissions.getInstance().archery(player);
 
         case AXES:
-            return mcPermissions.getInstance().axes(player);
+            return Permissions.getInstance().axes(player);
 
         case EXCAVATION:
-            return mcPermissions.getInstance().excavation(player);
+            return Permissions.getInstance().excavation(player);
 
         case FISHING:
-            return mcPermissions.getInstance().fishing(player);
+            return Permissions.getInstance().fishing(player);
 
         case HERBALISM:
-            return mcPermissions.getInstance().herbalism(player);
+            return Permissions.getInstance().herbalism(player);
 
         case MINING:
-            return mcPermissions.getInstance().mining(player);
+            return Permissions.getInstance().mining(player);
 
         case REPAIR:
-            return mcPermissions.getInstance().repair(player);
+            return Permissions.getInstance().repair(player);
 
         case SWORDS:
-            return mcPermissions.getInstance().swords(player);
+            return Permissions.getInstance().swords(player);
 
         case TAMING:
-            return mcPermissions.getInstance().taming(player);
+            return Permissions.getInstance().taming(player);
 
         case UNARMED:
-            return mcPermissions.getInstance().unarmed(player);
+            return Permissions.getInstance().unarmed(player);
 
         case WOODCUTTING:
-            return mcPermissions.getInstance().woodcutting(player);
+            return Permissions.getInstance().woodcutting(player);
 
         default:
             return false;

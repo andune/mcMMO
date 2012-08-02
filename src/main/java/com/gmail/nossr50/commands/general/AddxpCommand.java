@@ -6,80 +6,130 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.m;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.skills.Skills;
+import com.gmail.nossr50.commands.CommandHelper;
+import com.gmail.nossr50.datatypes.McMMOPlayer;
+import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.datatypes.SkillType;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.Misc;
+import com.gmail.nossr50.util.Skills;
+import com.gmail.nossr50.util.Users;
 
+//TODO: Any way we can make this work for offline use?
 public class AddxpCommand implements CommandExecutor {
-	private final mcMMO plugin;
+    private final mcMMO plugin;
 
-	public AddxpCommand(mcMMO instance) {
-		this.plugin = instance;
-	}
+    public AddxpCommand (mcMMO plugin) {
+        this.plugin = plugin;
+    }
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		Player player = null;
-        if (sender instanceof Player) {
-            player = (Player) sender;
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        Player modifiedPlayer;
+        int xp;
+        SkillType skill;
+        String skillName;
+        String usage = ChatColor.RED + "Proper usage is /addxp [playername] <skill> <xp>"; //TODO: Needs more locale.
+
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.tools.mmoedit")) {
+            return true;
         }
-        
-        if (player != null && !mcPermissions.getInstance().mmoedit(player)) {
-			sender.sendMessage("This command requires permissions."); //TODO: Needs more locale.
-			return true;
-		}
 
-		if (!(sender instanceof Player)) {
-			if (args.length < 2) {
-				// No console aliasing yet
-				// System.out.println("Usage is /"+LoadProperties.addxp+" playername skillname xp");
-				System.out.println("Usage is /addxp playername skillname xp");
-				return true;
-			} else if (args.length == 3) {
-				if ((plugin.getServer().getPlayer(args[0]) != null) && m.isInt(args[2]) && Skills.isSkill(args[1])) {
-					int newvalue = Integer.valueOf(args[2]);
-					Users.getProfile(plugin.getServer().getPlayer(args[0])).addXPOverride(Skills.getSkillType(args[1]), newvalue);
-					plugin.getServer().getPlayer(args[0]).sendMessage(ChatColor.GREEN + "Experience granted!"); //TODO: Needs more locale.
-					System.out.println(args[1] + " has been modified for " + plugin.getServer().getPlayer(args[0]).getName() + ".");
-					Skills.XpCheckAll(plugin.getServer().getPlayer(args[0]));
-				}
-			} else {
-				// No console aliasing yet
-				// System.out.println("Usage is /"+LoadProperties.addxp+" playername skillname xp");
-				System.out.println("Usage is /addxp playername skillname xp"); //TODO: Needs more locale.
-			}
-			return true;
-		}
+        switch (args.length) {
+        case 2:
+            if (sender instanceof Player) {
+                if (!Skills.isSkill(args[1])) {
+                    sender.sendMessage(LocaleLoader.getString("Commands.Skill.Invalid"));
+                    return true;
+                }
 
-		if (!mcPermissions.getInstance().mmoedit(player)) {
-			player.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
-			return true;
-		}
-		if (args.length < 2) {
-			player.sendMessage(ChatColor.RED + "Usage is /addxp playername skillname xp"); //TODO: Needs more locale.
-			return true;
-		}
-		if (args.length == 3) {
-			if ((plugin.getServer().getPlayer(args[0]) != null) && m.isInt(args[2]) && Skills.isSkill(args[1])) {
-				int newvalue = Integer.valueOf(args[2]);
-				Users.getProfile(plugin.getServer().getPlayer(args[0])).addXP(Skills.getSkillType(args[1]), newvalue);
-				plugin.getServer().getPlayer(args[0]).sendMessage(ChatColor.GREEN + "Experience granted!"); //TODO: Needs more locale.
-				player.sendMessage(ChatColor.RED + args[1] + " has been modified."); //TODO: Needs more locale.
-				Skills.XpCheckAll(plugin.getServer().getPlayer(args[0]));
-			}
-		} else if (args.length == 2 && m.isInt(args[1]) && Skills.isSkill(args[0])) {
-			int newvalue = Integer.valueOf(args[1]);
-			Users.getProfile(player).addXP(Skills.getSkillType(args[0]), newvalue);
-			player.sendMessage(ChatColor.GREEN + "Experience granted!"); //TODO: Needs more locale.
-			player.sendMessage(ChatColor.RED + args[0] + " has been modified."); //TODO: Needs more locale.
-			Skills.XpCheckAll(plugin.getServer().getPlayer(args[0]));
-		} else {
-			player.sendMessage(ChatColor.RED + "Usage is /addxp playername skillname xp"); //TODO: Needs more locale.
-		}
+                if (Misc.isInt(args[1])) {
+                    modifiedPlayer = (Player) sender;
+                    xp = Integer.valueOf(args[1]);
+                    skill = Skills.getSkillType(args[0]);
 
-		return true;
-	}
+                    PlayerProfile profile = Users.getProfile(modifiedPlayer);
+                    McMMOPlayer mcMMOPlayer = Users.getPlayer(modifiedPlayer);
+                    mcMMOPlayer.addXPOverride(skill, xp);
+
+                    if (skill.equals(SkillType.ALL)) {
+                        skillName = "all skills";
+                    }
+                    else {
+                        skillName = Misc.getCapitalized(skill.toString());
+                    }
+
+                    modifiedPlayer.sendMessage(ChatColor.GREEN + "You were awarded " + xp + " experience in " + skillName + "!"); //TODO: Needs more locale.
+
+                    if (skill.equals(SkillType.ALL)) {
+                        Skills.xpCheckAll(modifiedPlayer, profile);
+                    }
+                    else {
+                        Skills.xpCheckSkill(skill, modifiedPlayer, profile);
+                    }
+                }
+                else {
+                    sender.sendMessage(usage);
+                }
+            }
+            else {
+                sender.sendMessage(usage);
+            }
+
+            return true;
+
+        case 3:
+            modifiedPlayer = plugin.getServer().getPlayer(args[0]);
+            String playerName = modifiedPlayer.getName();
+            McMMOPlayer mcMMOPlayer = Users.getPlayer(modifiedPlayer);
+            PlayerProfile profile = Users.getProfile(modifiedPlayer);
+
+            if (!profile.isLoaded()) {
+                sender.sendMessage(LocaleLoader.getString("Commands.DoesNotExist"));
+                return true;
+            }
+
+            if (!Skills.isSkill(args[1])) {
+                sender.sendMessage(LocaleLoader.getString("Commands.Skill.Invalid"));
+                return true;
+            }
+
+            if (Misc.isInt(args[2])) {
+                xp = Integer.valueOf(args[2]);
+                skill = Skills.getSkillType(args[1]);
+                String message;
+
+                mcMMOPlayer.addXPOverride(skill, xp);
+
+                if (skill.equals(SkillType.ALL)) {
+                    skillName = "all skills";
+                    message = ChatColor.RED + "All skills have been modified for " + playerName + "."; //TODO: Use locale
+                }
+                else {
+                    skillName = Misc.getCapitalized(skill.toString());
+                    message = ChatColor.RED + skillName + " has been modified for " + playerName + "."; //TODO: Use locale
+                }
+
+                sender.sendMessage(message);
+                modifiedPlayer.sendMessage(ChatColor.GREEN + "You were awarded " + xp + " experience in " + skillName + "!"); //TODO: Needs more locale.
+
+                if (skill.equals(SkillType.ALL)) {
+                    Skills.xpCheckAll(modifiedPlayer, profile);
+                }
+                else {
+                    Skills.xpCheckSkill(skill, modifiedPlayer, profile);
+                }
+            }
+            else {
+                sender.sendMessage(usage);
+            }
+
+            return true;
+
+        default:
+            sender.sendMessage(usage);
+            return true;
+        }
+    }
 }

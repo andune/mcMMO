@@ -1,55 +1,79 @@
 package com.gmail.nossr50.config;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import com.gmail.nossr50.mcMMO;
 
 public abstract class ConfigLoader {
+    protected static final mcMMO plugin = mcMMO.p;
+    protected String fileName;
+    protected File configFile;
+    protected FileConfiguration config;
 
-    protected static File configFile;
-    protected static File dataFolder;
-    protected final mcMMO plugin;
-    protected static FileConfiguration config;
-
-    public ConfigLoader(mcMMO plugin, String fileName){
-        this.plugin = plugin;
-        dataFolder = plugin.getDataFolder();
-        configFile = new File(dataFolder, File.separator + fileName);
+    public ConfigLoader(String relativePath, String fileName){
+        this.fileName = fileName;
+        configFile = new File(plugin.getDataFolder(), relativePath + File.separator + fileName);
+        loadFile();
     }
 
-    /**
-     * Load this config file.
-     */
-    protected abstract void load();
+    public ConfigLoader(String fileName){
+        this.fileName = fileName;
+        configFile = new File(plugin.getDataFolder(), fileName);
+        loadFile();
+    }
 
-    /**
-     * Save this config file.
-     */
-    private static void saveConfig() {
-        try {
-            config.save(configFile);
+    protected void loadFile() {
+        if (!configFile.exists()) {
+            plugin.getLogger().info("Creating mcMMO " + fileName + " File...");
+            createFile();
         }
-        catch (IOException e) {
-            e.printStackTrace();
+        else {
+            plugin.getLogger().info("Loading mcMMO " + fileName + " File...");
         }
+
+        config = YamlConfiguration.loadConfiguration(configFile);
     }
 
-    /**
-     * Add the defaults to this config file.
-     */
-    protected void addDefaults() {
-
-        // Load from included config.yml
-        config.options().copyDefaults(true);
-        saveConfig();
-    }
-
-    /**
-     * Load the keys from this config file.
-     */
     protected abstract void loadKeys();
 
+    protected void createFile() {
+        if (configFile.exists()) {
+            return;
+        }
+
+        configFile.getParentFile().mkdirs();
+
+        InputStream inputStream = plugin.getResource(fileName);
+
+        if (inputStream != null) {
+            try {
+                copyStreamToFile(inputStream, configFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            plugin.getLogger().severe("Missing ressource file: '" + fileName + "' please notify the plugin authors");
+        }
+    }
+
+    private static void copyStreamToFile(InputStream inputStream, File file) throws Exception {
+        OutputStream outputStream = new FileOutputStream(file);
+
+        int read = 0;
+        byte[] bytes = new byte[1024];
+
+        while ((read = inputStream.read(bytes)) != -1) {
+            outputStream.write(bytes, 0, read);
+        }
+
+        inputStream.close();
+        outputStream.close();
+    }
 }

@@ -1,74 +1,97 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.util.Page;
+import com.gmail.nossr50.locale.LocaleLoader;
 
-public class UnarmedCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class UnarmedCommand extends SkillCommand {
+    private String berserkLength;
+    private String deflectChance;
+    private String disarmChance;
+    private String ironArmBonus;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    private boolean canBerserk;
+    private boolean canDisarm;
+    private boolean canBonusDamage;
+    private boolean canDeflect;
 
-		String percentage, arrowpercentage;
-		float skillvalue = (float) PP.getSkillLevel(SkillType.UNARMED);
+    public UnarmedCommand() {
+        super(SkillType.UNARMED);
+    }
 
-		if (PP.getSkillLevel(SkillType.UNARMED) < 1000)
-			percentage = String.valueOf((skillvalue / 3000) * 100);
-		else
-			percentage = "33.3";
+    @Override
+    protected void dataCalculations() {
+        berserkLength = String.valueOf(2 + ((int) skillValue / 50));
 
-		if (PP.getSkillLevel(SkillType.UNARMED) < 1000)
-			arrowpercentage = String.valueOf(((skillvalue / 1000) * 100) / 2);
-		else
-			arrowpercentage = "50";
+        if (skillValue >= 1000) {
+            disarmChance = "33.33%";
+            deflectChance = "50.00%";
+            ironArmBonus = "8";
+        }
+        else if (skillValue >= 250) {
+            disarmChance = percent.format(skillValue / 3000);
+            deflectChance = percent.format(skillValue / 2000);
+            ironArmBonus = "8";
+        }
+        else {
+            disarmChance = percent.format(skillValue / 3000);
+            deflectChance = percent.format(skillValue / 2000);
+            ironArmBonus = String.valueOf(3 + ((int) skillValue / 50));
+        }    }
 
-		int ticks = 2;
-		int x = PP.getSkillLevel(SkillType.UNARMED);
-		while (x >= 50) {
-			x -= 50;
-			ticks++;
-		}
-		
-		int bonus = 3 + (PP.getSkillLevel(SkillType.UNARMED)/50);
-		
-		if(bonus > 8)
-		    bonus = 8;
+    @Override
+    protected void permissionsCheck() {
+        canBerserk = permInstance.berserk(player);
+        canBonusDamage = permInstance.unarmedBonus(player);
+        canDeflect = permInstance.deflect(player);
+        canDisarm = permInstance.disarm(player);
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillUnarmed") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainUnarmed") }));
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return canBerserk || canBonusDamage || canDeflect || canDisarm;
+    }
 
-		if (mcPermissions.getInstance().unarmed(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.UNARMED), PP.getSkillXpLevel(SkillType.UNARMED), PP.getXpToLevel(SkillType.UNARMED) }));
+    @Override
+    protected void effectsDisplay() {
+        if (canBerserk) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Unarmed.Effect.0"), LocaleLoader.getString("Unarmed.Effect.1") }));
+        }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsUnarmed1_0"), mcLocale.getString("m.EffectsUnarmed1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsUnarmed2_0"), mcLocale.getString("m.EffectsUnarmed2_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsUnarmed3_0"), mcLocale.getString("m.EffectsUnarmed3_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsUnarmed5_0"), mcLocale.getString("m.EffectsUnarmed5_1") }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
-		player.sendMessage(mcLocale.getString("m.UnarmedArrowDeflectChance", new Object[] { arrowpercentage }));
-		player.sendMessage(mcLocale.getString("m.UnarmedDisarmChance", new Object[] { percentage }));
+        if (canDisarm) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Unarmed.Effect.2"), LocaleLoader.getString("Unarmed.Effect.3") }));
+        }
 
-		player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusUnarmed2_0"), mcLocale.getString("m.AbilBonusUnarmed2_1", new Object[] {bonus}) }));
+        if (canBonusDamage) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Unarmed.Effect.4"), LocaleLoader.getString("Unarmed.Effect.5") }));
+        }
 
-		player.sendMessage(mcLocale.getString("m.UnarmedBerserkLength", new Object[] { ticks }));
-		
-		Page.grabGuidePageForSkill(SkillType.UNARMED, player, args);
+        if (canDeflect) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Unarmed.Effect.6"), LocaleLoader.getString("Unarmed.Effect.7") }));
+        }
+    }
 
-		return true;
-	}
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return canBerserk || canBonusDamage || canDeflect || canDisarm;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        if (canBonusDamage) {
+            player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Unarmed.Ability.Bonus.0"), LocaleLoader.getString("Unarmed.Ability.Bonus.1", new Object[] {ironArmBonus}) }));
+        }
+
+        if (canDeflect) {
+            player.sendMessage(LocaleLoader.getString("Unarmed.Ability.Chance.ArrowDeflect", new Object[] { deflectChance }));
+        }
+
+        if (canDisarm) {
+            player.sendMessage(LocaleLoader.getString("Unarmed.Ability.Chance.Disarm", new Object[] { disarmChance }));
+        }
+
+        if (canBerserk) {
+            player.sendMessage(LocaleLoader.getString("Unarmed.Ability.Berserk.Length", new Object[] { berserkLength }));
+        }
+    }
 }

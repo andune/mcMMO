@@ -1,59 +1,88 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
+import com.gmail.nossr50.config.Config;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.util.Page;
+import com.gmail.nossr50.locale.LocaleLoader;
 
-public class WoodcuttingCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class WoodcuttingCommand extends SkillCommand {
+    private String treeFellerLength;
+    private String doubleDropChance;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
-		
-		float skillvalue = (float) PP.getSkillLevel(SkillType.WOODCUTTING);
-		int ticks = 2;
-		int x = PP.getSkillLevel(SkillType.WOODCUTTING);
-		while (x >= 50) {
-			x -= 50;
-			ticks++;
-		}
-		String percentage = String.valueOf((skillvalue / 1000) * 100);
-		
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillWoodCutting") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainWoodCutting") }));
-		
-		if (mcPermissions.getInstance().woodcutting(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.WOODCUTTING), PP.getSkillXpLevel(SkillType.WOODCUTTING), PP.getXpToLevel(SkillType.WOODCUTTING) }));
-		
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsWoodCutting1_0"), mcLocale.getString("m.EffectsWoodCutting1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsWoodCutting2_0"), mcLocale.getString("m.EffectsWoodCutting2_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsWoodCutting3_0"), mcLocale.getString("m.EffectsWoodCutting3_1") }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
-		
-		if (PP.getSkillLevel(SkillType.WOODCUTTING) < 100)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockWoodCutting1") }));
-		else
-			player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusWoodCutting1_0"), mcLocale.getString("m.AbilBonusWoodCutting1_1") }));
-		
-		player.sendMessage(mcLocale.getString("m.WoodCuttingDoubleDropChance", new Object[] { percentage }));
-		player.sendMessage(mcLocale.getString("m.WoodCuttingTreeFellerLength", new Object[] { ticks }));
-		
-		Page.grabGuidePageForSkill(SkillType.WOODCUTTING, player, args);
-		
-		return true;
-	}
+    private boolean canTreeFell;
+    private boolean canLeafBlow;
+    private boolean canDoubleDrop;
+    private boolean doubleDropsDisabled;
+
+    public WoodcuttingCommand() {
+        super(SkillType.WOODCUTTING);
+    }
+
+    @Override
+    protected void dataCalculations() {
+        treeFellerLength = String.valueOf(2 + ((int) skillValue / 50));
+
+        if (skillValue >= 1000) {
+            doubleDropChance = "100.00%";
+        }
+        else {
+            doubleDropChance = percent.format(skillValue / 1000);
+        }
+    }
+
+    @Override
+    protected void permissionsCheck() {
+        Config configInstance = Config.getInstance();
+
+        canTreeFell = permInstance.treeFeller(player);
+        canDoubleDrop = permInstance.woodcuttingDoubleDrops(player);
+        canLeafBlow = permInstance.leafBlower(player);
+        doubleDropsDisabled = configInstance.woodcuttingDoubleDropsDisabled();
+    }
+
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return (canDoubleDrop && !doubleDropsDisabled) || canLeafBlow || canTreeFell;
+    }
+
+    @Override
+    protected void effectsDisplay() {
+        if (canTreeFell) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Woodcutting.Effect.0"), LocaleLoader.getString("Woodcutting.Effect.1") }));
+        }
+
+        if (canLeafBlow) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Woodcutting.Effect.2"), LocaleLoader.getString("Woodcutting.Effect.3") }));
+        }
+
+        if (canDoubleDrop && !doubleDropsDisabled) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Woodcutting.Effect.4"), LocaleLoader.getString("Woodcutting.Effect.5") }));
+        }
+    }
+
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return (canDoubleDrop && !doubleDropsDisabled) || canLeafBlow || canTreeFell;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        //TODO: Remove? Basically duplicates the above.
+        if (canLeafBlow) {
+            if (skillValue < 100) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Woodcutting.Ability.Locked.0") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Woodcutting.Ability.0"), LocaleLoader.getString("Woodcutting.Ability.1") }));
+            }
+        }
+
+        if (canDoubleDrop && !doubleDropsDisabled) {
+            player.sendMessage(LocaleLoader.getString("Woodcutting.Ability.Chance.DDrop", new Object[] { doubleDropChance }));
+        }
+
+        if (canTreeFell) {
+            player.sendMessage(LocaleLoader.getString("Woodcutting.Ability.Length", new Object[] { treeFellerLength }));
+        }
+    }
 }

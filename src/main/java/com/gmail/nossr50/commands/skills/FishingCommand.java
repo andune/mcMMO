@@ -1,50 +1,78 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.skills.Fishing;
-import com.gmail.nossr50.util.Page;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.skills.gathering.Fishing;
 
-public class FishingCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class FishingCommand extends SkillCommand {
+    private int lootTier;
+    private String magicChance;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    private boolean canTreasureHunt;
+    private boolean canMagicHunt;
+    private boolean canShake;
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillFishing") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainFishing") }));
+    public FishingCommand() {
+        super(SkillType.FISHING);
+    }
 
-		if (mcPermissions.getInstance().fishing(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.FISHING), PP.getSkillXpLevel(SkillType.FISHING), PP.getXpToLevel(SkillType.FISHING) }));
+    @Override
+    protected void dataCalculations() {
+        lootTier = Fishing.getFishingLootTier(profile);
+        magicChance = percent.format((float) lootTier / 15);
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsFishing1_0"), mcLocale.getString("m.EffectsFishing1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsFishing2_0"), mcLocale.getString("m.EffectsFishing2_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsFishing3_0"), mcLocale.getString("m.EffectsFishing3_1") }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
-		player.sendMessage(mcLocale.getString("m.FishingRank", new Object[] { Fishing.getFishingLootTier(PP) }));
-		player.sendMessage(mcLocale.getString("m.FishingMagicInfo"));
+    @Override
+    protected void permissionsCheck() {
+        canTreasureHunt = permInstance.fishingTreasures(player);
+        canMagicHunt = permInstance.fishingMagic(player);
+        canShake = permInstance.shakeMob(player);
+    }
 
-		if (PP.getSkillLevel(SkillType.FISHING) < 150)
-			player.sendMessage(mcLocale.getString("m.AbilityLockTemplate", new Object[] { mcLocale.getString("m.AbilLockFishing1") }));
-		else
-			player.sendMessage(mcLocale.getString("m.ShakeInfo", new Object[] { Fishing.getFishingLootTier(PP) }));
-		
-		Page.grabGuidePageForSkill(SkillType.FISHING, player, args);
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return canTreasureHunt || canMagicHunt || canShake;
+    }
 
-		return true;
-	}
+    @Override
+    protected void effectsDisplay() {
+        if (canTreasureHunt) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Fishing.Effect.0"), LocaleLoader.getString("Fishing.Effect.1") }));
+        }
+
+        if (canMagicHunt) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Fishing.Effect.2"), LocaleLoader.getString("Fishing.Effect.3") }));
+        }
+
+        if (canShake) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Fishing.Effect.4"), LocaleLoader.getString("Fishing.Effect.5") }));
+        }
+    }
+
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return canTreasureHunt || canMagicHunt || canShake;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        if (canTreasureHunt) {
+            player.sendMessage(LocaleLoader.getString("Fishing.Ability.Rank", new Object[] { lootTier }));
+        }
+
+        if (canMagicHunt) {
+            player.sendMessage(LocaleLoader.getString("Fishing.Enchant.Chance", new Object[] { magicChance }));
+        }
+
+        if (canShake) {
+            //TODO: Do we really need to display this twice? Not like there are any associated stats.
+            if (skillValue < 150) {
+                player.sendMessage(LocaleLoader.getString("Ability.Generic.Template.Lock", new Object[] { LocaleLoader.getString("Fishing.Ability.Locked.0") }));
+            }
+            else {
+                player.sendMessage(LocaleLoader.getString("Fishing.Ability.Shake"));
+            }
+        }
+    }
 }

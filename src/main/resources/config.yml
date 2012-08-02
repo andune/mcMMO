@@ -1,6 +1,6 @@
 #
 #  mcMMO configuration
-#    First generated on ${project.version}-b${BUILD_NUMBER}
+#  First generated on ${project.version}-b${BUILD_NUMBER}
 #
 #####
 
@@ -8,7 +8,7 @@
 #  Settings for mcMMO in general
 ###
 General:
-    Locale: en_us
+    Locale: en_US
     MOTD_Enabled: true
     #Amount of time (in minutes) to wait between saves of player information
     Save_Interval: 10
@@ -16,7 +16,6 @@ General:
     Stats_Tracking: true
     #Allow mcMMO to inform other plugins of damage being dealt
     Event_Callback: true
-    Per_Level_Tools: false
     Power_Level_Cap: 0
 
 #
@@ -32,6 +31,22 @@ MySQL:
     Server:
         Port: 3306
         Address: localhost
+#
+#  Settings for Hardcore mode
+###
+Hardcore:
+    Enabled: false
+    Death_Stat_Loss_Penalty_Percentage: 75
+    Vampirism: false
+    Vampirism_Stat_Leech_Percentage: 5
+
+#
+#  Settings for SMP Mods
+###
+Mods:
+    Tool_Mods_Enabled: false
+    Armor_Mods_Enabled: false
+    Block_Mods_Enabled: false
 
 #
 #  Settings for mcMMO items
@@ -41,30 +56,6 @@ Items:
         Enabled: true
         Feather_Cost: 10
         Item_ID: 288
-    Diamond:
-        Axe: 750
-        Hoe: 750
-        Shovel: 750
-        Sword: 750
-        Pickaxe: 750
-    Gold:
-        Axe: 500
-        Hoe: 500
-        Shovel: 500
-        Sword: 500
-        Pickaxe: 500
-    Iron:
-        Axe: 250
-        Hoe: 250
-        Shovel: 250
-        Sword: 250
-        Pickaxe: 250
-    Stone:
-        Axe: 0
-        Hoe: 0
-        Shovel: 0
-        Sword: 0
-        Pickaxe: 0
 
 #
 #  Settings for Arcane Forging
@@ -119,6 +110,15 @@ Abilities:
         Serrated_Strikes: 240
         Tree_Feller: 240
         Super_Breaker: 240
+    Max_Seconds:
+        Blast_Mining: 0
+        Giga_Drill_Breaker: 0
+        Berserk: 0
+        Green_Terra: 0
+        Skull_Splitter: 0
+        Serrated_Strikes: 0
+        Tree_Feller: 0
+        Super_Breaker: 0
     Limits:
        Tree_Feller_Threshold: 500
     Tools:
@@ -131,10 +131,16 @@ Abilities:
 ###
 Skills:
     Acrobatics:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0 
     Archery:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0
     Axes:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0
     Excavation:
         Level_Cap: 0
@@ -147,8 +153,6 @@ Skills:
             Cobble_To_Mossy: true
             SmoothBrick_To_MossyBrick: true
             Dirt_To_Grass: true
-        Hunger_Bonus: true
-        Instant_Wheat_Regrowth: true
     Mining:
         Level_Cap: 0
         Requires_Pickaxe: true
@@ -157,38 +161,61 @@ Skills:
         Level_Cap: 0
         Anvil_Messages: true
         Anvil_ID: 42
-        Can_Repair_Armor: true
-        Can_Repair_Tools: true
-        Leather:
-            ID: 334
-        String:
-            ID: 287
-        Stone:
-            Level_Required: 0
-            ID: 4
-        Wood:
-            ID: 5
-        Gold:
-            Level_Required: 0
-            ID: 266
-        Iron:
-            Level_Required: 0
-            ID: 265
-        Diamond:
-            Level_Required: 50
-            ID: 264
     Swords:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0
     Taming:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0
         Call_Of_The_Wild:
             Bones_Required: 10
             Fish_Required: 10
     Unarmed:
+        Enabled_For_PVP: true
+        Enabled_For_PVE: true
         Level_Cap: 0
     Woodcutting:
         Level_Cap: 0
         Requires_Axe: true
+
+#
+#  Settings for Double Drops  
+###
+Double_Drops:
+    Herbalism:
+        Brown_Mushrooms: true
+        Cacti: true
+        Melons: true
+        Nether_Warts: true
+        Pumpkins: true
+        Red_Mushrooms: true
+        Red_Roses: true
+        Sugar_Cane: true
+        Vines: true
+        Water_Lilies: true
+        Wheat: true
+        Yellow_Flowers: true
+    Mining:
+        Coal: true
+        Diamond: true
+        End_Stone: true
+        Glowstone: true
+        Gold: true
+        Iron: true
+        Lapis: true
+        Moss_Stone: true
+        Netherrack: true
+        Obsidian: true
+        Redstone: true
+        Sandstone: true
+        Stone: true
+    Woodcutting:
+        Oak: true
+        Birch: true
+        Spruce: true
+        Jungle: true
 
 #
 #  Settings for XP distribution
@@ -203,6 +230,7 @@ Experience:
     PVP:
         Rewards: true
     Formula:
+        Curve_Modifier: 20
         Multiplier:
             Swords: 1.0
             Taming: 1.0
@@ -258,11 +286,11 @@ Experience:
         Multiplier:
             Animals: 1.0
             Creeper: 4.0
-            Skeleton: 2.0
-            Spider: 3.0
+            Skeleton: 3.0
+            Spider: 2.0
             Zombie: 2.0
             Pig_Zombie: 3.0
-            Enderman: 2.0
+            Enderman: 4.0
             Cave_Spider: 3.0
             Silverfish: 3.0
             Blaze: 3.0
@@ -270,6 +298,7 @@ Experience:
             Ender_Dragon: 8.0
             Slime: 2.0
             Ghast: 3.0
+            Iron_Golem: 2.0
 #
 #  Settings for commands
 ###
@@ -314,89 +343,5 @@ Commands:
         Cooldown: 30
     p:
         Enabled: true
-        Display_Names: true
     a:
         Enabled: true
-        Display_Names: true
-
-#
-#  Settings for Spout features
-###
-Spout:
-    Menu:
-        Key: KEY_M
-    XP:
-        Bar:
-            Enabled: true
-            X_POS: 95
-            Y_POS: 6
-        Icon:
-            Enabled: true
-            X_POS: 78
-            Y_POS: 2
-    Party:
-        HUD:
-            Show_Faces: true
-            Enabled: true
-            Show_Display_Name: false
-    HUD:
-        Show_Power_Level: true
-        Default: STANDARD
-        Retro:
-            Colors:
-                Swords:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Taming:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Acrobatics:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Border:
-                    BLUE: 0.0
-                    GREEN: 0.0
-                    RED: 0.0
-                Background:
-                    BLUE: 0.75
-                    GREEN: 0.75
-                    RED: 0.75
-                Woodcutting:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Archery:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Axes:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Repair:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Fishing:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Excavation:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Herbalism:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Unarmed:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3
-                Mining:
-                    BLUE: 0.75
-                    GREEN: 0.3
-                    RED: 0.3

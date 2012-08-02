@@ -1,68 +1,108 @@
 package com.gmail.nossr50.commands.skills;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.datatypes.PlayerProfile;
+import com.gmail.nossr50.commands.SkillCommand;
 import com.gmail.nossr50.datatypes.SkillType;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.locale.LocaleLoader;
 
-public class AxesCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+public class AxesCommand extends SkillCommand {
+    private String critChance;
+    private String bonusDamage;
+    private String impactDamage;
+    private String greaterImpactDamage;
+    private String skullSplitterLength;
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    private boolean canSkullSplitter;
+    private boolean canCritical;
+    private boolean canBonusDamage;
+    private boolean canImpact;
+    private boolean canGreaterImpact;
 
-		String percentage;
+    public AxesCommand() {
+        super(SkillType.AXES);
+    }
 
-		float skillvalue = (float) PP.getSkillLevel(SkillType.AXES);
-		if (PP.getSkillLevel(SkillType.AXES) < 750)
-			percentage = String.valueOf((skillvalue / 2000) * 100);
-		else
-			percentage = "37.5";
-		
-		int bonusDmg = Users.getProfile(player).getSkillLevel(SkillType.AXES)/50;
-		if(bonusDmg > 4)
-		    bonusDmg = 4;
+    @Override
+    protected void dataCalculations() {
+        impactDamage = String.valueOf(5 + ((int) skillValue / 30));
+        skullSplitterLength = String.valueOf(2 + ((int) skillValue / 50));
+        greaterImpactDamage = "2";
 
-		int ticks = 2;
-		short durDmg = 5;
-		durDmg+=Users.getProfile(player).getSkillLevel(SkillType.AXES)/30;
-		int x = PP.getSkillLevel(SkillType.AXES);
-		while (x >= 50) {
-			x -= 50;
-			ticks++;
-		}
+        if (skillValue >= 750) {
+            critChance = "37.50";
+            bonusDamage = "4";
+        }
+        else if (skillValue >= 200) {
+            critChance = percent.format(skillValue / 2000);
+            bonusDamage = "4";
+        }
+        else {
+            critChance = percent.format(skillValue / 2000);
+            bonusDamage = String.valueOf((int) skillValue / 50);
+        }
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.SkillAxes") }));
-		player.sendMessage(mcLocale.getString("m.XPGain", new Object[] { mcLocale.getString("m.XPGainAxes") }));
+    @Override
+    protected void permissionsCheck() {
+        canSkullSplitter = permInstance.skullSplitter(player);
+        canCritical = permInstance.criticalHit(player);
+        canBonusDamage = permInstance.axeBonus(player);
+        canImpact = permInstance.impact(player);
+        canGreaterImpact = permInstance.greaterImpact(player);
+    }
 
-		if (mcPermissions.getInstance().axes(player))
-			player.sendMessage(mcLocale.getString("m.LVL", new Object[] { PP.getSkillLevel(SkillType.AXES), PP.getSkillXpLevel(SkillType.AXES), PP.getXpToLevel(SkillType.AXES) }));
+    @Override
+    protected boolean effectsHeaderPermissions() {
+        return canSkullSplitter || canCritical || canBonusDamage || canImpact || canGreaterImpact;
+    }
 
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.Effects") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsAxes1_0"), mcLocale.getString("m.EffectsAxes1_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsAxes2_0"), mcLocale.getString("m.EffectsAxes2_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsAxes3_0"), mcLocale.getString("m.EffectsAxes3_1") }));
-		player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsAxes4_0"), mcLocale.getString("m.EffectsAxes4_1") }));
-        player.sendMessage(mcLocale.getString("m.EffectsTemplate", new Object[] { mcLocale.getString("m.EffectsAxes5_0"), mcLocale.getString("m.EffectsAxes5_1") }));
-		player.sendMessage(mcLocale.getString("m.SkillHeader", new Object[] { mcLocale.getString("m.YourStats") }));
-		player.sendMessage(mcLocale.getString("m.AxesCritChance", new Object[] { percentage }));
-		
-		player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusAxes1_0"), mcLocale.getString("m.AbilBonusAxes1_1", new Object[] {bonusDmg}) }));
-        player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusAxes2_0"), mcLocale.getString("m.AbilBonusAxes2_1", new Object[] {durDmg}) }));
-        player.sendMessage(mcLocale.getString("m.AbilityBonusTemplate", new Object[] { mcLocale.getString("m.AbilBonusAxes3_0"), mcLocale.getString("m.AbilBonusAxes3_1", new Object[] {2}) }));
-        player.sendMessage(mcLocale.getString("m.AxesSkullLength", new Object[] { ticks }));
+    @Override
+    protected void effectsDisplay() {
+        if (canSkullSplitter) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Axes.Effect.0"), LocaleLoader.getString("Axes.Effect.1") }));
+        }
 
-		return true;
-	}
+        if (canCritical) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Axes.Effect.2"), LocaleLoader.getString("Axes.Effect.3") }));
+        }
+
+        if (canBonusDamage) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Axes.Effect.4"), LocaleLoader.getString("Axes.Effect.5") }));
+        }
+
+        if (canImpact) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Axes.Effect.6"), LocaleLoader.getString("Axes.Effect.7") }));
+        }
+
+        if (canGreaterImpact) {
+            player.sendMessage(LocaleLoader.getString("Effects.Template", new Object[] { LocaleLoader.getString("Axes.Effect.8"), LocaleLoader.getString("Axes.Effect.9") }));
+        }
+    }
+
+    @Override
+    protected boolean statsHeaderPermissions() {
+        return canSkullSplitter || canCritical || canBonusDamage || canImpact || canGreaterImpact;
+    }
+
+    @Override
+    protected void statsDisplay() {
+        if (canBonusDamage) {
+            player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Axes.Ability.Bonus.0"), LocaleLoader.getString("Axes.Ability.Bonus.1", new Object[] {bonusDamage}) }));
+        }
+
+        if (canImpact) {
+            player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Axes.Ability.Bonus.2"), LocaleLoader.getString("Axes.Ability.Bonus.3", new Object[] {impactDamage}) }));
+        }
+
+        if (canGreaterImpact) {
+            player.sendMessage(LocaleLoader.getString("Ability.Generic.Template", new Object[] { LocaleLoader.getString("Axes.Ability.Bonus.4"), LocaleLoader.getString("Axes.Ability.Bonus.5", new Object[] {greaterImpactDamage}) }));
+        }
+
+        if (canCritical) {
+            player.sendMessage(LocaleLoader.getString("Axes.Combat.CritChance", new Object[] { critChance }));
+        }
+
+        if (canSkullSplitter) {
+            player.sendMessage(LocaleLoader.getString("Axes.Combat.SS.Length", new Object[] { skullSplitterLength }));
+        }
+    }
 }

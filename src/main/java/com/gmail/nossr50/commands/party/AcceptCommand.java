@@ -1,65 +1,70 @@
 package com.gmail.nossr50.commands.party;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.Users;
-import com.gmail.nossr50.mcPermissions;
+import com.gmail.nossr50.mcMMO;
+import com.gmail.nossr50.commands.CommandHelper;
 import com.gmail.nossr50.datatypes.PlayerProfile;
 import com.gmail.nossr50.events.party.McMMOPartyChangeEvent;
 import com.gmail.nossr50.events.party.McMMOPartyChangeEvent.EventReason;
-import com.gmail.nossr50.locale.mcLocale;
+import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.party.Party;
+import com.gmail.nossr50.party.PartyManager;
+import com.gmail.nossr50.util.Users;
 
 public class AcceptCommand implements CommandExecutor {
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    private final mcMMO plugin;
 
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("This command does not support console useage."); //TODO: Needs more locale.
-			return true;
-		}
+    public AcceptCommand (mcMMO plugin) {
+        this.plugin = plugin;
+    }
 
-		Player player = (Player) sender;
-		PlayerProfile PP = Users.getProfile(player);
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (CommandHelper.noConsoleUsage(sender)) {
+            return true;
+        }
 
-		if (!mcPermissions.getInstance().party(player)) {
-			player.sendMessage(ChatColor.YELLOW + "[mcMMO] " + ChatColor.DARK_RED + mcLocale.getString("mcPlayerListener.NoPermission"));
-			return true;
-		}
+        if (CommandHelper.noCommandPermissions(sender, "mcmmo.commands.party")) {
+            return true;
+        }
 
-		if (PP.hasPartyInvite()) {
-			Party Pinstance = Party.getInstance();
+        Player player = (Player) sender;
+        PlayerProfile playerProfile = Users.getProfile(player);
 
-			if (PP.inParty()) {
-                McMMOPartyChangeEvent event = new McMMOPartyChangeEvent(player, PP.getParty(), PP.getInvite(), EventReason.CHANGED_PARTIES);
-                Bukkit.getPluginManager().callEvent(event);
+        if (playerProfile.hasPartyInvite()) {
+            PartyManager partyManagerInstance = PartyManager.getInstance();
 
-                if (event.isCancelled()) {
-                    return true;
-                }
+            if (playerProfile.inParty()) {
+                Party party = playerProfile.getParty();
+                McMMOPartyChangeEvent event = new McMMOPartyChangeEvent(player, party.getName(), playerProfile.getInvite().getName(), EventReason.CHANGED_PARTIES);
 
-				Pinstance.removeFromParty(player, PP);
-			}
-			else {
-                McMMOPartyChangeEvent event = new McMMOPartyChangeEvent(player, null, PP.getInvite(), EventReason.JOINED_PARTY);
-                Bukkit.getPluginManager().callEvent(event);
+                plugin.getServer().getPluginManager().callEvent(event);
 
                 if (event.isCancelled()) {
                     return true;
                 }
-			}
-            PP.acceptInvite();
-            Pinstance.addToParty(player, PP, PP.getParty(), true, null);
 
-		} else {
-			player.sendMessage(mcLocale.getString("mcPlayerListener.NoInvites"));
-		}
+                partyManagerInstance.removeFromParty(player.getName(), party);
+            }
+            else {
+                McMMOPartyChangeEvent event = new McMMOPartyChangeEvent(player, null, playerProfile.getInvite().getName(), EventReason.JOINED_PARTY);
+                plugin.getServer().getPluginManager().callEvent(event);
 
-		return true;
-	}
+                if (event.isCancelled()) {
+                    return true;
+                }
+            }
+
+            partyManagerInstance.joinInvitedParty(player, playerProfile);
+        }
+        else {
+            player.sendMessage(LocaleLoader.getString("mcMMO.NoInvites"));
+        }
+
+        return true;
+    }
 }

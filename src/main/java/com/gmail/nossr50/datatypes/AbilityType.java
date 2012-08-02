@@ -1,35 +1,107 @@
 package com.gmail.nossr50.datatypes;
 
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import com.gmail.nossr50.mcPermissions;
-import com.gmail.nossr50.config.LoadProperties;
-import com.gmail.nossr50.locale.mcLocale;
-import com.gmail.nossr50.skills.Excavation;
-import com.gmail.nossr50.skills.Herbalism;
-import com.gmail.nossr50.skills.Mining;
+import com.gmail.nossr50.config.Config;
+import com.gmail.nossr50.locale.LocaleLoader;
+import com.gmail.nossr50.util.BlockChecks;
+import com.gmail.nossr50.util.Permissions;
 
 public enum AbilityType {
-    BERSERK(LoadProperties.berserkCooldown, mcLocale.getString("Skills.BerserkOn"), mcLocale.getString("Skills.BerserkOff"), "Skills.BerserkPlayer", mcLocale.getString("Skills.YourBerserk"), "Skills.BerserkPlayerOff"),
-    SUPER_BREAKER(LoadProperties.superBreakerCooldown, mcLocale.getString("Skills.SuperBreakerOn"), mcLocale.getString("Skills.SuperBreakerOff"), "Skills.SuperBreakerPlayer", mcLocale.getString("Skills.YourSuperBreaker"), "Skills.SuperBreakerPlayerOff"),
-    GIGA_DRILL_BREAKER(LoadProperties.gigaDrillBreakerCooldown, mcLocale.getString("Skills.GigaDrillBreakerOn"), mcLocale.getString("Skills.GigaDrillBreakerOff"), "Skills.GigaDrillBreakerPlayer", mcLocale.getString("Skills.YourGigaDrillBreaker"), "Skills.GigaDrillBreakerPlayerOff"),
-    GREEN_TERRA(LoadProperties.greenTerraCooldown, mcLocale.getString("Skills.GreenTerraOn"), mcLocale.getString("Skills.GreenTerraOff"), "Skills.GreenTerraPlayer", mcLocale.getString("Skills.YourGreenTerra"), mcLocale.getString("Skills.GreenTerraPlayerOff")),
-    SKULL_SPLIITER(LoadProperties.skullSplitterCooldown, mcLocale.getString("Skills.SkullSplitterOn"), mcLocale.getString("Skills.SkullSplitterOff"), "Skills.SkullSplitterPlayer", mcLocale.getString("Skills.YourSkullSplitter"), "Skills.SkullSplitterPlayerOff"),
-    TREE_FELLER(LoadProperties.treeFellerCooldown, mcLocale.getString("Skills.TreeFellerOn"), mcLocale.getString("Skills.TreeFellerOff"), "Skills.TreeFellerPlayer", mcLocale.getString("Skills.YourTreeFeller"), "Skills.TreeFellerPlayerOff"),
-    SERRATED_STRIKES(LoadProperties.skullSplitterCooldown, mcLocale.getString("Skills.SerratedStrikesOn"), mcLocale.getString("Skills.SerratedStrikesOff"), "Skills.SerratedStrikesPlayer", mcLocale.getString("Skills.YourSerratedStrikes"), "Skills.SerratedStrikesPlayerOff"),
-    BLAST_MINING(LoadProperties.blastMiningCooldown, null, null, "Skills.BlastMiningPlayer", mcLocale.getString("Skills.YourBlastMining"), null),
-    LEAF_BLOWER(0, null, null, null, null, null);
+    BERSERK(
+            Config.getInstance().getAbilityCooldownBerserk(),
+            Config.getInstance().getAbilityMaxTicksBerserk(),
+            "Unarmed.Skills.Berserk.On",
+            "Unarmed.Skills.Berserk.Off",
+            "Unarmed.Skills.Berserk.Other.On",
+            "Unarmed.Skills.Berserk.Refresh",
+            "Unarmed.Skills.Berserk.Other.Off"),
+
+    SUPER_BREAKER(
+            Config.getInstance().getAbilityCooldownSuperBreaker(),
+            Config.getInstance().getAbilityMaxTicksSuperBreaker(),
+            "Mining.Skills.SuperBreaker.On",
+            "Mining.Skills.SuperBreaker.Off",
+            "Mining.Skills.SuperBreaker.Other.On",
+            "Mining.Skills.SuperBreaker.Refresh",
+            "Mining.Skills.SuperBreaker.Other.Off"),
+
+    GIGA_DRILL_BREAKER(
+            Config.getInstance().getAbilityCooldownGigaDrillBreaker(),
+            Config.getInstance().getAbilityMaxTicksGigaDrillBreaker(),
+            "Excavation.Skills.GigaDrillBreaker.On",
+            "Excavation.Skills.GigaDrillBreaker.Off",
+            "Excavation.Skills.GigaDrillBreaker.Other.On",
+            "Excavation.Skills.GigaDrillBreaker.Refresh",
+            "Excavation.Skills.GigaDrillBreaker.Other.Off"),
+
+    GREEN_TERRA(
+            Config.getInstance().getAbilityCooldownGreenTerra(),
+            Config.getInstance().getAbilityMaxTicksGreenTerra(),
+            "Herbalism.Skills.GTe.On",
+            "Herbalism.Skills.GTe.Off",
+            "Herbalism.Skills.GTe.Other.On",
+            "Herbalism.Skills.GTe.Refresh",
+            "Herbalism.Skills.GTe.Other.Off"),
+
+    SKULL_SPLIITER(
+            Config.getInstance().getAbilityCooldownSkullSplitter(),
+            Config.getInstance().getAbilityMaxTicksSkullSplitter(),
+            "Axes.Skills.SS.On",
+            "Axes.Skills.SS.Off",
+            "Axes.Skills.SS.Other.On",
+            "Axes.Skills.SS.Refresh",
+            "Axes.Skills.SS.Other.Off"),
+
+    TREE_FELLER(
+            Config.getInstance().getAbilityCooldownTreeFeller(),
+            Config.getInstance().getAbilityMaxTicksTreeFeller(),
+            "Woodcutting.Skills.TreeFeller.On",
+            "Woodcutting.Skills.TreeFeller.Off",
+            "Woodcutting.Skills.TreeFeller.Other.On",
+            "Woodcutting.Skills.TreeFeller.Refresh",
+            "Woodcutting.Skills.TreeFeller.Other.Off"),
+
+    SERRATED_STRIKES(
+            Config.getInstance().getAbilityCooldownSerratedStrikes(),
+            Config.getInstance().getAbilityMaxTicksSerratedStrikes(),
+            "Swords.Skills.SS.On",
+            "Swords.Skills.SS.Off",
+            "Swords.Skills.SS.Other.On",
+            "Swords.Skills.SS.Refresh",
+            "Swords.Skills.SS.Other.Off"),
+
+    BLAST_MINING(
+            Config.getInstance().getAbilityCooldownBlastMining(),
+            Config.getInstance().getAbilityMaxTicksBlastMining(),
+            null,
+            null,
+            "Mining.Blast.Other.On",
+            "Mining.Blast.Refresh",
+            null),
+
+    LEAF_BLOWER(
+            0,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null);
 
     private int cooldown;
+    private int maxTicks;
     private String abilityOn;
     private String abilityOff;
     private String abilityPlayer;
     private String abilityRefresh;
     private String abilityPlayerOff;
 
-    private AbilityType(int cooldown, String abilityOn, String abilityOff, String abilityPlayer, String abilityRefresh, String abilityPlayerOff) {
+    private AbilityType(int cooldown, int maxTicks, String abilityOn, String abilityOff, String abilityPlayer, String abilityRefresh, String abilityPlayerOff) {
         this.cooldown = cooldown;
+        this.maxTicks = maxTicks;
         this.abilityOn = abilityOn;
         this.abilityOff = abilityOff;
         this.abilityPlayer = abilityPlayer;
@@ -42,23 +114,27 @@ public enum AbilityType {
     }
 
     public String getAbilityOn() {
-        return this.abilityOn;
+        return LocaleLoader.getString(this.abilityOn);
     }
 
     public String getAbilityOff() {
-        return this.abilityOff;
+        return LocaleLoader.getString(this.abilityOff);
     }
 
     public String getAbilityPlayer(Player player) {
-        return mcLocale.getString(this.abilityPlayer, new Object[] {player.getName()});
+        return LocaleLoader.getString(this.abilityPlayer, new Object[] {player.getName()});
     }
 
     public String getAbilityPlayerOff(Player player) {
-        return mcLocale.getString(this.abilityPlayerOff, new Object[] {player.getName()});
+        return LocaleLoader.getString(this.abilityPlayerOff, new Object[] {player.getName()});
     }
 
     public String getAbilityRefresh() {
-        return this.abilityRefresh;
+        return LocaleLoader.getString(this.abilityRefresh);
+    }
+
+    public int getMaxTicks() {
+        return this.maxTicks;
     }
 
     /**
@@ -68,33 +144,35 @@ public enum AbilityType {
      * @return true if the player has permissions, false otherwise
      */
     public boolean getPermissions(Player player) {
+        Permissions permInstance = Permissions.getInstance();
+
         switch (this) {
         case BERSERK:
-            return mcPermissions.getInstance().berserk(player);
+            return permInstance.berserk(player);
 
         case BLAST_MINING:
-            return mcPermissions.getInstance().blastMining(player);
+            return permInstance.blastMining(player);
 
         case GIGA_DRILL_BREAKER:
-            return mcPermissions.getInstance().gigaDrillBreaker(player);
+            return permInstance.gigaDrillBreaker(player);
 
         case GREEN_TERRA:
-            return mcPermissions.getInstance().greenTerra(player);
+            return permInstance.greenTerra(player);
 
         case LEAF_BLOWER:
-            return mcPermissions.getInstance().leafBlower(player);
+            return permInstance.leafBlower(player);
 
         case SERRATED_STRIKES:
-            return mcPermissions.getInstance().serratedStrikes(player);
+            return permInstance.serratedStrikes(player);
 
         case SKULL_SPLIITER:
-            return mcPermissions.getInstance().skullSplitter(player);
+            return permInstance.skullSplitter(player);
 
         case SUPER_BREAKER:
-            return mcPermissions.getInstance().superBreaker(player);
+            return permInstance.superBreaker(player);
 
         case TREE_FELLER:
-            return mcPermissions.getInstance().treeFeller(player);
+            return permInstance.treeFeller(player);
 
         default:
             return false;
@@ -104,28 +182,28 @@ public enum AbilityType {
     /**
      * Check if a block is affected by this ability.
      *
-     * @param material The block type to check
+     * @param Block the block to check
      * @return true if the block is affected by this ability, false otherwise
      */
-    public boolean blockCheck(Material material) {
+    public boolean blockCheck(Block block) {
         switch (this) {
         case BERSERK:
-            return (Excavation.canBeGigaDrillBroken(material) || material.equals(Material.SNOW));
+            return (BlockChecks.canBeGigaDrillBroken(block) || block.getType() == Material.SNOW);
 
         case GIGA_DRILL_BREAKER:
-            return Excavation.canBeGigaDrillBroken(material);
+            return BlockChecks.canBeGigaDrillBroken(block);
 
         case GREEN_TERRA:
-            return Herbalism.makeMossy(material);
+            return BlockChecks.makeMossy(block);
 
         case LEAF_BLOWER:
-            return material.equals(Material.LEAVES);
+            return block.getType() == Material.LEAVES;
 
         case SUPER_BREAKER:
-            return Mining.canBeSuperBroken(material);
+            return BlockChecks.canBeSuperBroken(block);
 
         case TREE_FELLER:
-            return material.equals(Material.LOG);
+            return block.getType() == Material.LOG;
 
         default:
             return false;
